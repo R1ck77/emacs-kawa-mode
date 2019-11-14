@@ -18,6 +18,7 @@
 
 (defun kawa-send-buffer ()
   (interactive)
-  (kawa-start))
+  (kawa-start)
+  (process-send-region kawa-process (point-min) (point-max)))
 
 (provide 'kawa-mode)

@@ -5,8 +5,10 @@
 
 (defun find-kawa-process ()
   (car
-   (seq-filter (lambda (x) (eq (get-buffer "*Kawa process*") x))
-               (mapcar 'process-buffer (process-list)))))
+   (seq-filter (lambda (x)
+                 (eq (get-buffer "*Kawa process*")
+                     (process-buffer x)))
+               (process-list))))
 
 (defmacro if-let (definition &rest forms)
   (declare (indent 1))
@@ -44,5 +46,5 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
         (kawa-mode)
         (kawa-start)
         (let ((process (find-kawa-process)))
-          (expect (find-kawa-process))
+          (expect process)
           (expect (process-live-p process)))))))

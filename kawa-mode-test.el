@@ -3,6 +3,8 @@
 (setq load-path (cons "." load-path))
 (require 'kawa-mode)
 
+(defconst debug-message "Form correctly interpreted!")
+
 (defun find-kawa-process ()
   (car
    (seq-filter (lambda (x)
@@ -32,6 +34,7 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
     (kill-buffer "*Kawa process*")))
 
 (describe "kawa-mode.el"
+  :var (temp-file)
   (after-each
     (kill-kawa-processes))
   (describe "kawa-mode"
@@ -66,9 +69,16 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
         (kawa-mode)
         (kawa-send-buffer)
         (expect (process-live-p (find-kawa-process)))))
-    (xit "sends the buffer to the process"
+    (it "sends the buffer to the process"
       (expect (not (find-kawa-process)))
+      (setq temp-file (make-temp-file "kawa-test-"))
       (with-temp-buffer
+        (insert (concat "(set! &<{" temp-file "} \"wrong message\")"
+                        "(set! &<{" temp-file "} \"" debug-message "\")"))
         (kawa-mode)
         (kawa-start)
-        ))))
+        (kawa-send-buffer))
+      (with-temp-buffer
+        (insert-file-contents temp-file)
+        (expect (buffer-substring (point-min) (point-max))
+                :to-equal debug-message)))))

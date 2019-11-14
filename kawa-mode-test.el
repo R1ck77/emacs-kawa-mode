@@ -10,6 +10,8 @@
                      (process-buffer x)))
                (process-list))))
 
+(defmacro comment (&forms))
+
 (defmacro if-let (definition &rest forms)
   (declare (indent 1))
   "Allows to write:
@@ -26,8 +28,8 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
 
 (defun kill-kawa-processes ()
   (if-let ((process (find-kawa-process)))
-    (print "Process found")
-    (process-kill-without-query process)))
+    (process-kill-without-query process)
+    (kill-buffer "*Kawa process*")))
 
 (describe "kawa-mode.el"
   (after-each
@@ -42,9 +44,31 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
                 :to-equal 'kawa-mode))))
   (describe "kawa-start"
     (it "starts a buffer with a process"
+      (expect (not (find-kawa-process)))
       (with-temp-buffer
         (kawa-mode)
         (kawa-start)
-        (let ((process (find-kawa-process)))
-          (expect process)
-          (expect (process-live-p process)))))))
+        (expect (process-live-p (find-kawa-process)))))
+    (it "does not start a process is one is present already"
+      (expect (not (find-kawa-process)))
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        (let ((old-process (find-kawa-process)))
+          (expect (process-live-p (find-kawa-process)))
+          (kawa-start)
+          (expect (eq old-process (find-kawa-process)))))))
+  (describe "kawa-send-buffer"
+    (it "starts the kawa interpreter if it's not present already"
+      (expect (not (find-kawa-process)))
+      (with-temp-buffer
+        (insert "(define x \"x symbol's value\"")
+        (kawa-mode)
+        (kawa-send-buffer)
+        (expect (process-live-p (find-kawa-process)))))
+    (xit "sends the buffer to the process"
+      (expect (not (find-kawa-process)))
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        ))))

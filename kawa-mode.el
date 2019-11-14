@@ -10,4 +10,8 @@
   (interactive)
   (start-process "Kawa" kawa--communication-buffer kawa-command))
 
+(defun kawa-send-buffer ()
+  (interactive)
+  (kawa-start))
+
 (provide 'kawa-mode)

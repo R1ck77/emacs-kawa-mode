@@ -6,9 +6,15 @@
 
 (define-derived-mode kawa-mode scheme-mode "Kawa" "Major mode for editing Kawa files")
 
+(defvar kawa-process nil
+  "Kawa-bound process")
+
 (defun kawa-start ()
   (interactive)
-  (start-process "Kawa" kawa--communication-buffer kawa-command))
+  (if (not (process-live-p kawa-process))
+      (setq kawa-process (start-process "Kawa"
+                                        kawa--communication-buffer
+                                        kawa-command))))
 
 (defun kawa-send-buffer ()
   (interactive)

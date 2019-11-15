@@ -33,6 +33,11 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
     (process-kill-without-query process)
     (kill-buffer "*Kawa process*")))
 
+(defun read-file (path)
+  (with-temp-buffer
+    (insert-file-contents path)
+    (buffer-substring (point-min) (point-max))))
+
 (describe "kawa-mode.el"
   :var (temp-file)
   (after-each
@@ -73,12 +78,14 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
       (expect (not (find-kawa-process)))
       (setq temp-file (make-temp-file "kawa-test-"))
       (with-temp-buffer
-        (insert (concat "(set! &<{" temp-file "} \"wrong message\")"
-                        "(set! &<{" temp-file "} \"" debug-message "\")"))
         (kawa-mode)
-        (kawa-start)
-        (kawa-send-buffer))
-      (with-temp-buffer
-        (insert-file-contents temp-file)
-        (expect (buffer-substring (point-min) (point-max))
-                :to-equal debug-message)))))
+        (kawa-start)       
+        (with-temp-buffer
+          (let ((content (concat "(set! &<{" temp-file "} \"wrong message\")\n"
+                                 "(set! &<{" temp-file "} \"" debug-message "\")")))
+            (insert content))
+          (kawa-send-buffer)))
+      (with-current-buffer "LOGBUFFER"
+        (message "Error content: %s\n" (buffer-substring-no-properties (point-min) (point-max))))
+      (expect (read-file temp-file)
+              :to-equal debug-message))))

@@ -1,6 +1,7 @@
 (require 'buttercup)
 (require 'seq)
 (setq load-path (cons "." load-path))
+(require 'kawa-mode-utils)
 (require 'kawa-mode)
 
 (defconst debug-message "Form correctly interpreted!")
@@ -12,24 +13,8 @@
                      (process-buffer x)))
                (process-list))))
 
-(defmacro comment (&forms))
-
-(defmacro if-let (definition &rest forms)
-  (declare (indent 1))
-  "Allows to write:
-
-(if-let ((var1 expr)
-         (var2 expr))
-    internal forms)
-
-which will return nil without evaluating the internal forms, or the result of
-the internal forms evaluation (where the bindings are visible) if var2 is true"
-  `(let ,definition
-     (if ,(car (car (reverse definition)))
-         (progn ,@forms))))
-
 (defun kill-kawa-processes ()
-  (if-let ((process (find-kawa-process)))
+  (when-let ((process (find-kawa-process)))
     (process-kill-without-query process)
     (kill-buffer "*Kawa process*")))
 
@@ -87,5 +72,6 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
           (kawa-send-buffer)))
       (with-current-buffer "LOGBUFFER"
         (message "Error content: %s\n" (buffer-substring-no-properties (point-min) (point-max))))
+      (sit-for 1)
       (expect (read-file temp-file)
               :to-equal debug-message))))

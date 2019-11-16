@@ -61,7 +61,15 @@
         (let ((old-process (find-kawa-process)))
           (expect (process-live-p (find-kawa-process)))
           (kawa-start)
-          (expect (eq old-process (find-kawa-process)))))))
+          (expect (eq old-process (find-kawa-process))))))
+    (it "creates a new buffer and displays it"
+      (with-temp-buffer
+        (spy-on 'display-buffer)
+        (kawa-mode)
+        (kawa-start)
+        (expect (get-buffer "*Kawa REPL*"))
+        (expect (spy-calls-all-args 'display-buffer)
+                :to-equal (list (list (get-buffer "*Kawa REPL*")))))))
   (describe "kawa-send-buffer"
     (it "starts the kawa interpreter if it's not present already"
       (expect (not (find-kawa-process)))

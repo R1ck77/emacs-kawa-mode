@@ -1,6 +1,7 @@
 (require 'derived)
 
 (defconst kawa--communication-buffer "*Kawa process*")
+(defconst kawa-buffer-name "*Kawa REPL*")
 
 (defvar kawa-command "kawa")
 
@@ -12,9 +13,16 @@
 (defun create-kawa-process (&optional log)
   (start-process "Kawa" kawa--communication-buffer kawa-command))
 
+(defun kawa--setup-repl-buffer ()
+  (with-current-buffer (get-buffer-create kawa-buffer-name)
+    (erase-buffer)
+    (kill-all-local-variables)
+    (display-buffer (current-buffer))))
+
 (defun kawa--get-process ()
-  (if (not (process-live-p kawa-process))
-      (setq kawa-process (create-kawa-process)))
+  (when (not (process-live-p kawa-process))
+    (setq kawa-process (create-kawa-process))
+    (kawa--setup-repl-buffer))
   kawa-process)
 
 (defun kawa-start ()

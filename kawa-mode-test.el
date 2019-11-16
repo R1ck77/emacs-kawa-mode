@@ -98,5 +98,6 @@
         (kawa-mode)
         (kawa-start)
         (with-current-buffer (get-buffer "*Kawa REPL*")
-            (expect (buffer-substring-no-properties (point-min) (point-max))
-                    :to-equal "#|kawa:1|# "))))))
+          (sit-for 2) ;;; TODO/FIXME quick dirty fix
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# "))))))

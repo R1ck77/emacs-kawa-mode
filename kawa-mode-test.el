@@ -91,4 +91,12 @@
           (kawa-send-buffer)))
       (wait-for-kawa-to-exit-with-timeout 5) ;; TODO/FIXME This is ugly™
       (expect (read-file temp-file)
-              :to-equal debug-message))))
+              :to-equal debug-message)))
+  (describe "kawa REPL buffer"
+    (it "shows the kawa prompt in the buffer"
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+            (expect (buffer-substring-no-properties (point-min) (point-max))
+                    :to-equal "#|kawa:1|# "))))))

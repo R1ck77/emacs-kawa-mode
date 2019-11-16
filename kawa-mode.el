@@ -17,12 +17,13 @@
   (with-current-buffer (get-buffer-create kawa-buffer-name)
     (erase-buffer)
     (kill-all-local-variables)
+    (insert "#|kawa:1|# ")
     (display-buffer (current-buffer))))
 
 (defun kawa--get-process ()
   (when (not (process-live-p kawa-process))
-    (setq kawa-process (create-kawa-process))
-    (kawa--setup-repl-buffer))
+    (kawa--setup-repl-buffer)
+    (setq kawa-process (create-kawa-process)))
   kawa-process)
 
 (defun kawa-start ()

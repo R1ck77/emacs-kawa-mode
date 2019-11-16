@@ -23,6 +23,17 @@
     (insert-file-contents path)
     (buffer-substring (point-min) (point-max))))
 
+(defun time ()
+  (let ((time (current-time)))
+    (+ (elt time 1) (/ (elt time 2) 1e6))))
+
+(defun wait-for-kawa-to-exit-with-timeout (timeout)
+  (let ((start (time)))
+    (while (process-live-p (find-kawa-process))
+      (sit-for 0.1)
+      (if (> (- (time) start) timeout)
+          (error "Timeout waiting for kawa to finish!")))))
+
 (describe "kawa-mode.el"
   :var (temp-file)
   (after-each
@@ -66,12 +77,10 @@
         (kawa-mode)
         (kawa-start)       
         (with-temp-buffer
-          (let ((content (concat "(set! &<{" temp-file "} \"wrong message\")\n"
-                                 "(set! &<{" temp-file "} \"" debug-message "\")")))
-            (insert content))
+          (insert (concat "(set! &<{" temp-file "} \"wrong message\")"
+                          "(set! &<{" temp-file "} \"" debug-message "\")"
+                          "(exit 0)"))
           (kawa-send-buffer)))
-      (with-current-buffer "LOGBUFFER"
-        (message "Error content: %s\n" (buffer-substring-no-properties (point-min) (point-max))))
-      (sit-for 1)
+      (wait-for-kawa-to-exit-with-timeout 5) ;; TODO/FIXME This is ugly™
       (expect (read-file temp-file)
               :to-equal debug-message))))

@@ -10,11 +10,7 @@
   "Kawa-bound process")
 
 (defun create-kawa-process (&optional log)
-  ;(start-process "Kawa" kawa--communication-buffer kawa-command)
-  (make-process :name "Kawa"
-                :buffer kawa--communication-buffer
-                :command (list "kawa" "--console")
-                :stderr (get-buffer-create "LOGBUFFER")))
+  (start-process "Kawa" kawa--communication-buffer kawa-command))
 
 (defun kawa--get-process ()
   (if (not (process-live-p kawa-process))

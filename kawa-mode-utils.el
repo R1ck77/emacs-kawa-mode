@@ -13,6 +13,14 @@ which will return nil without evaluating the internal forms, or the result of
 the internal forms evaluation (where the bindings are visible) if var2 is true"
   `(let ,definition
      (when ,(car (car (reverse definition)))
-         (progn ,@forms))))
+       (progn ,@forms))))
+
+(defun kawa--wait-condition-with-timeout (predicate-f timeout &optional check-interval)
+  (let ((check-interval (or check-interval 0.1))
+        (start (time)))
+    (while (funcall predicate-f)
+      (sit-for check-interval)
+      (if (> (- (time) start) timeout)
+          (error "Timeout waiting for the operation to finish!")))))
 
 (provide 'kawa-mode-utils)

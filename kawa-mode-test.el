@@ -28,11 +28,16 @@
     (+ (elt time 1) (/ (elt time 2) 1e6))))
 
 (defun wait-for-kawa-to-exit-with-timeout (timeout)
-  (let ((start (time)))
-    (while (process-live-p (find-kawa-process))
-      (sit-for 0.1)
-      (if (> (- (time) start) timeout)
-          (error "Timeout waiting for kawa to finish!")))))
+  (let ((process (find-kawa-process)))
+    (kawa--wait-condition-with-timeout (lambda ()
+                                         (process-live-p process))
+                                       timeout)))
+
+(defun wait-for-kawa-buffer-to-change-with-timeout (timeout)
+  (let ((starting-size (point-max)))
+   (kawa--wait-condition-with-timeout (lambda ()
+                                        (= (point-max) starting-size))
+                                      timeout)))
 
 (defun remove-file-if-any (path)
   (condition-case nil
@@ -99,7 +104,7 @@
         (insert (make-string 100 ? ))
         (insert "\(define x 12\)")
         (goto-char 50)
-        (expect (kawa-eval-expr-at-point) :to-throw 'error)))
+        (expect (kawa-eval-expr-at-point) :to-throw 'error))))
   (describe "kawa-send-buffer"
     (it "is a command"
       (expect (commandp 'kawa-send-buffer)))
@@ -119,15 +124,15 @@
                           "(set! &<{" temp-file "} \"" debug-message "\")"
                           "(exit 0)"))
           (kawa-send-buffer)))
-      (wait-for-kawa-to-exit-with-timeout 5) ;; TODO/FIXME This is ugly™
+      (wait-for-kawa-to-exit-with-timeout 5)
       (expect (read-file temp-file)
-              :to-equal debug-message))))
-    (describe "kawa REPL buffer"
+              :to-equal debug-message)))  
+  (describe "kawa REPL buffer"
     (it "shows the kawa prompt in the buffer"
       (with-temp-buffer
         (kawa-mode)
         (kawa-start)
         (with-current-buffer (get-buffer "*Kawa REPL*")
-          (sit-for 2) ;;; TODO/FIXME quick dirty fix
+          (wait-for-kawa-buffer-to-change-with-timeout 2)
           (expect (buffer-substring-no-properties (point-min) (point-max))
                   :to-equal "#|kawa:1|# "))))))

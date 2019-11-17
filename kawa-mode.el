@@ -42,7 +42,6 @@
   (when (not (process-live-p kawa-process))
     (setq kawa-process (create-kawa-process))
     (kawa--setup-repl-buffer))
-
   kawa-process)
 
 (defun kawa-start ()
@@ -78,6 +77,7 @@
 (defun kawa-eval-expr-at-point ()
   (interactive)
   (kawa-start)
-  (apply 'process-send-region (cons kawa-process (kawa--previous-expression-bounds))))
+  (apply 'process-send-region (cons kawa-process (kawa--previous-expression-bounds)))
+  (process-send-string kawa-process "\n")) ; TODO/FIXME shouldn't I check if a newline is there already?
 
 (provide 'kawa-mode)

@@ -104,7 +104,16 @@
         (insert (make-string 100 ? ))
         (insert "\(define x 12\)")
         (goto-char 50)
-        (expect (kawa-eval-expr-at-point) :to-throw 'error))))
+        (expect (kawa-eval-expr-at-point) :to-throw 'error)))
+    (it "evaluates the expression in the buffer"
+      (with-temp-buffer
+        (insert "\(exit 2\) \(exit 3\)   ")
+        (kawa-mode)
+        (kawa-eval-expr-at-point)
+        (let ((process (find-kawa-process)))
+          (wait-for-kawa-to-exit-with-timeout 5)
+          (expect (process-exit-status process)
+                  :to-be 3)))))
   (describe "kawa-send-buffer"
     (it "is a command"
       (expect (commandp 'kawa-send-buffer)))
@@ -118,15 +127,18 @@
       (setq temp-file (make-temp-file "kawa-test-"))
       (with-temp-buffer
         (kawa-mode)
-        (kawa-start)       
-        (with-temp-buffer
-          (insert (concat "(set! &<{" temp-file "} \"wrong message\")"
-                          "(set! &<{" temp-file "} \"" debug-message "\")"
-                          "(exit 0)"))
-          (kawa-send-buffer)))
-      (wait-for-kawa-to-exit-with-timeout 5)
-      (expect (read-file temp-file)
-              :to-equal debug-message)))  
+        (kawa-start)
+        (let ((process (find-kawa-process)))          
+          (with-temp-buffer
+            (insert (concat "(set! &<{" temp-file "} \"wrong message\")"
+                            "(set! &<{" temp-file "} \"" debug-message "\")"
+                            "(exit 4)"))
+            (kawa-send-buffer))
+          (wait-for-kawa-to-exit-with-timeout 5)
+          (expect (process-exit-status process)
+                  :to-be 4)
+          (expect (read-file temp-file)
+                  :to-equal debug-message)))))  
   (describe "kawa REPL buffer"
     (it "shows the kawa prompt in the buffer"
       (with-temp-buffer

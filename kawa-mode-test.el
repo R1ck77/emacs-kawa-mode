@@ -42,7 +42,8 @@
 (describe "kawa-mode.el"
   :var (temp-file)
   (before-each
-    (setq temp-file nil))
+    (setq temp-file nil)
+    (expect (not (find-kawa-process))))
   (after-each
     (kill-kawa-processes)
     (when temp-file
@@ -57,13 +58,12 @@
                 :to-equal 'kawa-mode))))
   (describe "kawa-start"
     (it "starts a buffer with a process"
-      (expect (not (find-kawa-process)))
+
       (with-temp-buffer
         (kawa-mode)
         (kawa-start)
         (expect (process-live-p (find-kawa-process)))))
     (it "does not start a process is one is present already"
-      (expect (not (find-kawa-process)))
       (with-temp-buffer
         (kawa-mode)
         (kawa-start)
@@ -83,18 +83,15 @@
     (it "is a command"
       (expect (commandp 'kawa-send-buffer)))    
     (it "starts the kawa interpreter if one is not running already"
-      (expect (not (find-kawa-process)))
       (with-temp-buffer
         (insert "\(define x \"x symbol's value\"\)")
         (kawa-eval-expr-at-point))
       (expect (process-live-p (find-kawa-process))))
     (it "throws an error if there is no expression before the point"
-      (expect (not (find-kawa-process)))
       (with-temp-buffer
         (insert (make-string 100 ? ))
         (expect (kawa-eval-expr-at-point) :to-throw 'error)))
     (it "throws an error if there is no expression before the point (even if there is an expression after the point)"
-      (expect (not (find-kawa-process)))
       (with-temp-buffer
         (insert (make-string 100 ? ))
         (insert "\(define x 12\)")
@@ -104,14 +101,12 @@
     (it "is a command"
       (expect (commandp 'kawa-send-buffer)))
     (it "starts the kawa interpreter if it not running already"
-      (expect (not (find-kawa-process)))
       (with-temp-buffer
         (insert "\(define x \"x symbol's value\"\)")
         (kawa-mode)
         (kawa-send-buffer)
         (expect (process-live-p (find-kawa-process)))))
     (it "sends the buffer to the process"
-      (expect (not (find-kawa-process)))
       (setq temp-file (make-temp-file "kawa-test-"))
       (with-temp-buffer
         (kawa-mode)

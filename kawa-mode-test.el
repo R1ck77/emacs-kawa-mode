@@ -114,14 +114,14 @@
           (wait-for-kawa-to-exit-with-timeout 5)
           (expect (process-exit-status process)
                   :to-be 3)))))
-  (describe "kawa-send-buffer"
+  (describe "kawa-eval-buffer"
     (it "is a command"
-      (expect (commandp 'kawa-send-buffer)))
+      (expect (commandp 'kawa-eval-buffer)))
     (it "starts the kawa interpreter if it not running already"
       (with-temp-buffer
         (insert "\(define x \"x symbol's value\"\)")
         (kawa-mode)
-        (kawa-send-buffer)
+        (kawa-eval-buffer)
         (expect (process-live-p (find-kawa-process)))))
     (it "sends the buffer to the process"
       (setq temp-file (make-temp-file "kawa-test-"))
@@ -133,7 +133,7 @@
             (insert (concat "(set! &<{" temp-file "} \"wrong message\")"
                             "(set! &<{" temp-file "} \"" debug-message "\")"
                             "(exit 4)"))
-            (kawa-send-buffer))
+            (kawa-eval-buffer))
           (wait-for-kawa-to-exit-with-timeout 5)
           (expect (process-exit-status process)
                   :to-be 4)

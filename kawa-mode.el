@@ -49,7 +49,7 @@
   (kawa--get-process))
 
 ;;; TODO/FIXME is there a point in using the process variable instead of kawa--get-process
-(defun kawa-send-buffer ()
+(defun kawa-eval-buffer ()
   (interactive)
   (kawa-start)
   (process-send-region kawa-process (point-min) (point-max))

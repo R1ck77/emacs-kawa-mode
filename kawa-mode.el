@@ -50,12 +50,18 @@
   (interactive)
   (kawa--get-process))
 
+(defun kawa--expression-feedback (content)
+  (with-current-buffer kawa-buffer-name
+    (insert (format "%s\n" content))))
+
 ;;; TODO/FIXME is there a point in using the process variable instead of kawa--get-process
 (defun kawa-eval-buffer ()
   (interactive)
   (kawa-start)
-  (process-send-region kawa-process (point-min) (point-max))
-  (process-send-string kawa-process "\n"))
+  (let ((content (buffer-substring-no-properties (point-min) (point-max))))
+    (kawa--expression-feedback content)
+    (process-send-string kawa-process content)
+    (process-send-string kawa-process "\n")))
 
 (defun kawa--raw-previous-expression-bounds ()
   (save-excursion    

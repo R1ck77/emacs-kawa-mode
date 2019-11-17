@@ -34,10 +34,19 @@
       (if (> (- (time) start) timeout)
           (error "Timeout waiting for kawa to finish!")))))
 
+(defun remove-file-if-any (path)
+  (condition-case nil
+      (delete-file path)
+    (error nil)))
+
 (describe "kawa-mode.el"
   :var (temp-file)
+  (before-each
+    (setq temp-file nil))
   (after-each
-    (kill-kawa-processes))
+    (kill-kawa-processes)
+    (when temp-file
+      (remove-file-if-any temp-file)))
   (describe "kawa-mode"
     (it "sets the current buffer's mode and name"
       (with-temp-buffer

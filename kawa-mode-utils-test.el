@@ -2,7 +2,7 @@
 (setq load-path (cons "." load-path))
 (require 'kawa-mode-utils)
 
-(describe "kawa-mode-utils"
+(describe "kawa-mode-utils.el"
   (describe "comment"
     (it "prevents the evaluation of the forms inside the comment"
       (spy-on 'message)

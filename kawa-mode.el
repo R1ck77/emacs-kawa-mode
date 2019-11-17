@@ -13,7 +13,8 @@
   "Kawa-bound process")
 
 (defun create-kawa-process (&optional log)
-  (start-process "Kawa" kawa--communication-buffer kawa-command))
+  (let ((process-connection-type nil))
+   (start-process "Kawa" kawa--communication-buffer kawa-command "--console")))
 
 (defun kawa--copy-process-buffer-content ()
   (with-current-buffer (get-buffer kawa--communication-buffer)

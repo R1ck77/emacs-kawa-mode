@@ -23,7 +23,8 @@
       (with-current-buffer (get-buffer kawa-buffer-name)
         (goto-char (point-max))
         (insert content)))
-    (erase-buffer)))
+    (erase-buffer)
+    (set-marker (process-mark kawa-process) (point))))
 
 (defun kawa--setup-repl-buffer-hooks ()
   (with-current-buffer (get-buffer kawa--communication-buffer)        

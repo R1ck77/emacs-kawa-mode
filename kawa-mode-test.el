@@ -49,6 +49,8 @@
     (when temp-file
       (remove-file-if-any temp-file)))
   (describe "kawa-mode"
+    (it "is a command"
+      (expect (commandp 'kawa-mode)))
     (it "sets the current buffer's mode and name"
       (with-temp-buffer
         (kawa-mode)
@@ -57,8 +59,9 @@
         (expect major-mode
                 :to-equal 'kawa-mode))))
   (describe "kawa-start"
+    (it "is a command"
+      (expect (commandp 'kawa-start)))
     (it "starts a buffer with a process"
-
       (with-temp-buffer
         (kawa-mode)
         (kawa-start)
@@ -81,7 +84,7 @@
                 :to-equal (list (list (get-buffer "*Kawa REPL*")))))))
   (describe "kawa-eval-expr-at-point"
     (it "is a command"
-      (expect (commandp 'kawa-send-buffer)))    
+      (expect (commandp 'kawa-eval-expr-at-point)))    
     (it "starts the kawa interpreter if one is not running already"
       (with-temp-buffer
         (insert "\(define x \"x symbol's value\"\)")

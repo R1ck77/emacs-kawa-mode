@@ -70,11 +70,34 @@
         (expect (get-buffer "*Kawa REPL*"))
         (expect (spy-calls-all-args 'display-buffer)
                 :to-equal (list (list (get-buffer "*Kawa REPL*")))))))
-  (describe "kawa-send-buffer"
-    (it "starts the kawa interpreter if it's not present already"
+  (describe "kawa-eval-expr-at-point"
+    (it "is a command"
+      (expect (commandp 'kawa-send-buffer)))    
+    (it "starts the kawa interpreter if one is not running already"
       (expect (not (find-kawa-process)))
       (with-temp-buffer
-        (insert "(define x \"x symbol's value\"")
+        (insert "\(define x \"x symbol's value\"\)")
+        (kawa-eval-expr-at-point))
+      (expect (process-live-p (find-kawa-process))))
+    (it "throws an error if there is no expression before the point"
+      (expect (not (find-kawa-process)))
+      (with-temp-buffer
+        (insert (make-string 100 ? ))
+        (expect (kawa-eval-expr-at-point) :to-throw 'error)))
+    (it "throws an error if there is no expression before the point (even if there is an expression after the point)"
+      (expect (not (find-kawa-process)))
+      (with-temp-buffer
+        (insert (make-string 100 ? ))
+        (insert "\(define x 12\)")
+        (goto-char 50)
+        (expect (kawa-eval-expr-at-point) :to-throw 'error)))
+  (describe "kawa-send-buffer"
+    (it "is a command"
+      (expect (commandp 'kawa-send-buffer)))
+    (it "starts the kawa interpreter if it not running already"
+      (expect (not (find-kawa-process)))
+      (with-temp-buffer
+        (insert "\(define x \"x symbol's value\"\)")
         (kawa-mode)
         (kawa-send-buffer)
         (expect (process-live-p (find-kawa-process)))))
@@ -91,8 +114,8 @@
           (kawa-send-buffer)))
       (wait-for-kawa-to-exit-with-timeout 5) ;; TODO/FIXME This is ugly™
       (expect (read-file temp-file)
-              :to-equal debug-message)))
-  (describe "kawa REPL buffer"
+              :to-equal debug-message))))
+    (describe "kawa REPL buffer"
     (it "shows the kawa prompt in the buffer"
       (with-temp-buffer
         (kawa-mode)

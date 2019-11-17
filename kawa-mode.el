@@ -1,5 +1,6 @@
 (require 'derived)
 (require 'cl)
+(require 'subr-x)
 
 (defconst kawa--communication-buffer "*Kawa process*")
 (defconst kawa-buffer-name "*Kawa REPL*")
@@ -54,5 +55,29 @@
   (kawa-start)
   (process-send-region kawa-process (point-min) (point-max))
   (process-send-string kawa-process "\n"))
+
+(defun kawa--raw-previous-expression-bounds ()
+  (save-excursion    
+    (backward-sexp)
+    (let ((from (point)))
+      (forward-sexp)
+      (list from (point)))))
+
+(defun kawa--valid-bounds-p (bounds)
+  (let ((trimmed-content (string-trim (apply 'buffer-substring-no-properties bounds))))
+    (and (> (length trimmed-content) 0)
+         (<= (second bounds) (point)))))
+
+(defun kawa--previous-expression-bounds ()
+  "Returns a list with the beginning and end of the last sexp"
+  (let ((bounds (kawa--raw-previous-expression-bounds)))
+    (if (kawa--valid-bounds-p bounds)
+        bounds
+      (error "No expression at point"))))
+
+(defun kawa-eval-expr-at-point ()
+  (interactive)
+  (kawa-start)
+  (apply 'process-send-region (cons kawa-process (kawa--previous-expression-bounds))))
 
 (provide 'kawa-mode)

@@ -9,14 +9,14 @@
 (defun find-kawa-process ()
   (car
    (seq-filter (lambda (x)
-                 (eq (get-buffer "*Kawa process*")
+                 (eq (get-buffer "*Kawa REPL*")
                      (process-buffer x)))
                (process-list))))
 
 (defun kill-kawa-processes ()
   (when-let ((process (find-kawa-process)))
     (process-kill-without-query process)
-    (kill-buffer "*Kawa process*")))
+    (kill-buffer "*Kawa REPL*")))
 
 (defun read-file (path)
   (with-temp-buffer

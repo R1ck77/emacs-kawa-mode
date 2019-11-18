@@ -11,16 +11,17 @@
 (defvar kawa-process nil
   "Kawa-bound process")
 
-(defun create-kawa-process (&optional log)
+(defun kawa--filter (process content)
+  (when (buffer-live-p (process-buffer process))
+    (with-current-buffer (process-buffer process)
+      (insert content))))
+
+(defun kawa--create-kawa-process (&optional log)
   (let ((process (make-process :name "Kawa"
                                :command (list kawa-command "--console")
                                :buffer kawa-buffer-name
                                :connection-type 'pipe
-                               :filter (lambda (process content)
-                                         (when (buffer-live-p (process-buffer process))
-                                           (print (format "***** filtering %s…" content))
-                                           (with-current-buffer (process-buffer process)
-                                             (insert content)))))))
+                               :filter 'kawa--filter)))
     (or (process-live-p process)
         (error "Kawa process not started (ensure the command \"Kawa\" is in your PATH)!"))
     (accept-process-output kawa-process)
@@ -34,7 +35,7 @@
 
 (defun kawa--get-process ()
   (when (not (process-live-p kawa-process))
-    (setq kawa-process (create-kawa-process))
+    (setq kawa-process (kawa--create-kawa-process))
     (kawa--setup-repl-buffer))
   kawa-process)
 
@@ -44,7 +45,8 @@
 
 (defun kawa--expression-feedback (content)
   (with-current-buffer kawa-buffer-name
-    (print (format "current content: %s, current buffer: %s" content (current-buffer)))
+    (message "Sending the buffer: %s" content)
+    (goto-char (point-max))
     (insert (format "%s\n" content))))
 
 ;;; TODO/FIXME is there a point in using the process variable instead of kawa--get-process
@@ -75,10 +77,13 @@
         bounds
       (error "No expression at point"))))
 
+;;; TODO/FIXME shouldn't I check if a newline is there already?
 (defun kawa-eval-expr-at-point ()
   (interactive)
   (kawa-start)
-  (apply 'process-send-region (cons kawa-process (kawa--previous-expression-bounds)))
-  (process-send-string kawa-process "\n")) ; TODO/FIXME shouldn't I check if a newline is there already?
+  (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
+    (kawa--expression-feedback content)
+    (process-send-string kawa-process content)
+    (process-send-string kawa-process "\n")))
 
 (provide 'kawa-mode)

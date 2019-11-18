@@ -6,10 +6,16 @@
 
 (defvar kawa-command "kawa")
 
-(define-derived-mode kawa-mode scheme-mode "Kawa" "Major mode for editing Kawa files")
-
 (defvar kawa-process nil
   "Kawa-bound process")
+
+(defvar kawa-mode-map nil
+  "Keymap for Kawa major mode")
+(unless kawa-mode-map
+  (setq kawa-mode-map (make-sparse-keymap))
+  (define-key kawa-mode-map "\C-c\M-j" 'kawa-start)  
+  (define-key kawa-mode-map "\C-x\C-e" 'kawa-eval-buffer)
+  (define-key kawa-mode-map "\C-x\C-b" 'kawa-eval-expr-at-point))
 
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))
@@ -85,5 +91,11 @@
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
     (process-send-string kawa-process "\n")))
+
+(define-derived-mode kawa-mode scheme-mode
+  "Kawa" "Major mode for editing Kawa files.
+
+Special commands:
+\\{kawa-mode-map}")
 
 (provide 'kawa-mode)

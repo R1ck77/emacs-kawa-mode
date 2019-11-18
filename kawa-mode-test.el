@@ -114,15 +114,18 @@
           (wait-for-kawa-to-exit-with-timeout 5)
           (expect (process-exit-status process)
                   :to-be 3))))
-    (xit "sends the expression into the REPL" ;TODO/FIXME this breaks the *other* tests!
+    (it "sends the expression into the REPL" ;TODO/FIXME this breaks the *other* tests!
       (with-temp-buffer        
         (insert "\(define x 12\)")
         (kawa-mode)
         (kawa-eval-expr-at-point)
-        (with-current-buffer (get-buffer "*Kawa REPL*")          
-          (sit-for 5)
+        (insert "\(exit 12\)")
+        (kawa-eval-expr-at-point)
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+          (wait-for-kawa-to-exit-with-timeout 5)
           (expect (buffer-substring-no-properties (point-min) (point-max))
-                  :to-equal "#|kawa:1|# \(define x 12\)\n")))))
+                  :to-equal "#|kawa:1|# \(define x 12\)
+|kawa:2|# \(exit 12\)\n")))))
   (describe "kawa-eval-buffer"
     (it "is a command"
       (expect (commandp 'kawa-eval-buffer)))

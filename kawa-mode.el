@@ -23,6 +23,7 @@
                                              (insert content)))))))
     (or (process-live-p process)
         (error "Kawa process not started (ensure the command \"Kawa\" is in your PATH)!"))
+    (accept-process-output kawa-process)
     process))
 
 (defun kawa--setup-repl-buffer ()

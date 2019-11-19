@@ -17,11 +17,21 @@
   (define-key kawa-mode-map "\C-x\C-e" 'kawa-eval-buffer)
   (define-key kawa-mode-map "\C-x\C-b" 'kawa-eval-expr-at-point))
 
+(defvar kawa--output-received nil
+  "t when the filter just received some contents")
+
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))
     (with-current-buffer (process-buffer process)
       (insert content)
-      (set-marker (process-mark process) (point-max)))))
+      (set-marker (process-mark process) (point-max))
+      (goto-char (point-max)) ; TODO/FIXME no effect? Save excursion somewhere?
+      (setq kawa--output-received t))))
+
+(defun kawa--wait-for-output (&optional timeout)
+  (kawa--wait-condition-with-timeout (lambda ()
+                                       (not kawa--output-received))
+                                     (or timeout 60)))
 
 (defun kawa--create-kawa-process (&optional log)
   (let ((process (make-process :name "Kawa"
@@ -52,15 +62,16 @@
 
 (defun kawa--expression-feedback (content)
   (with-current-buffer kawa-buffer-name
-    (message "Sending the buffer: %s" content)
-    (goto-char (point-max))
-    (insert (format "%s\n" content))))
+    (goto-char (process-mark kawa-process))
+    (insert (format "%s\n" content))
+    (set-marker (process-mark kawa-process) (point-max))))
 
 ;;; TODO/FIXME is there a point in using the process variable instead of kawa--get-process
 (defun kawa-eval-buffer ()
   (interactive)
   (kawa-start)
   (let ((content (buffer-substring-no-properties (point-min) (point-max))))
+    (kawa--wait-for-output)
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
     (process-send-string kawa-process "\n")))
@@ -89,6 +100,7 @@
   (interactive)
   (kawa-start)
   (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
+;    (kawa--wait-for-output) ; TODO/FIXME this breaks everything
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
     (process-send-string kawa-process "\n")))

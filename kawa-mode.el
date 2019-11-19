@@ -20,7 +20,8 @@
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))
     (with-current-buffer (process-buffer process)
-      (insert content))))
+      (insert content)
+      (set-marker (process-mark process) (point-max)))))
 
 (defun kawa--create-kawa-process (&optional log)
   (let ((process (make-process :name "Kawa"

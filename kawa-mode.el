@@ -19,6 +19,7 @@
 
 (defvar kawa--output-received nil
   "t when the filter just received some contents")
+(make-variable-buffer-local 'kawa--output-received)
 
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))

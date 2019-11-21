@@ -1,10 +1,13 @@
 (require 'derived)
 (require 'cl)
 (require 'subr-x)
+(require 'kawa-mode-utils)
 
 (defconst kawa-buffer-name "*Kawa REPL*")
 
-(defvar kawa-command "kawa")
+(defconst kawa-command "kawa")
+
+(defconst kawa-output-timeout 60)
 
 (defvar kawa-process nil
   "Kawa-bound process")
@@ -30,9 +33,10 @@
       (setq kawa--output-received t))))
 
 (defun kawa--wait-for-output (&optional timeout)
+  (sit-for 2)
   (kawa--wait-condition-with-timeout (lambda ()
-                                       (not kawa--output-received))
-                                     (or timeout 60)))
+                                       kawa--output-received)
+                                     (or timeout kawa-output-timeout)))
 
 (defun kawa--create-kawa-process (&optional log)
   (let ((process (make-process :name "Kawa"
@@ -71,7 +75,7 @@
 (defun kawa-eval-buffer ()
   (interactive)
   (kawa-start)
-  (let ((content (buffer-substring-no-properties (point-min) (point-max))))
+  (let ((content (buffer-substring-no-properties (point-min) (point-max))))    
     (kawa--wait-for-output)
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
@@ -101,7 +105,7 @@
   (interactive)
   (kawa-start)
   (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
-;    (kawa--wait-for-output) ; TODO/FIXME this breaks everything
+    (kawa--wait-for-output) ; TODO/FIXME this breaks everything
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
     (process-send-string kawa-process "\n")))
@@ -110,6 +114,8 @@
   "Kawa" "Major mode for editing Kawa files.
 
 Special commands:
-\\{kawa-mode-map}")
+\\{kawa-mode-map}"
+  (setq kawa-process nil)
+  (setq kawa-output-received nil))
 
 (provide 'kawa-mode)

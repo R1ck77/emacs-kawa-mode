@@ -1,6 +1,5 @@
 (require 'buttercup)
 (require 'seq)
-(setq load-path (cons "." load-path))
 (require 'kawa-mode-utils)
 (require 'kawa-mode)
 

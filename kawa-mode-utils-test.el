@@ -1,5 +1,4 @@
 (require 'buttercup)
-(setq load-path (cons "." load-path))
 (require 'kawa-mode-utils)
 
 (describe "kawa-mode-utils.el"

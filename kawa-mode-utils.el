@@ -15,6 +15,10 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
      (when ,(car (car (reverse definition)))
        (progn ,@forms))))
 
+(defun time ()
+  (let ((time (current-time)))
+    (+ (elt time 1) (/ (elt time 2) 1e6))))
+
 (defun kawa--wait-condition-with-timeout (predicate-f timeout &optional check-interval)
   (let ((check-interval (or check-interval 0.1))
         (start (time)))

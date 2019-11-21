@@ -23,10 +23,6 @@
     (insert-file-contents path)
     (buffer-substring (point-min) (point-max))))
 
-(defun time ()
-  (let ((time (current-time)))
-    (+ (elt time 1) (/ (elt time 2) 1e6))))
-
 (defun wait-for-kawa-to-exit-with-timeout (timeout)
   (let ((process (find-kawa-process)))
     (kawa--wait-condition-with-timeout (lambda ()

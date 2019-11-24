@@ -33,7 +33,6 @@
       (setq kawa--output-received t))))
 
 (defun kawa--wait-for-output (&optional timeout)
-  (sit-for 2)
   (kawa--wait-condition-with-timeout (lambda ()
                                        kawa--output-received)
                                      (or timeout kawa-output-timeout)))

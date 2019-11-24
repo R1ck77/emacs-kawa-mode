@@ -27,4 +27,11 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
       (if (> (- (time) start) timeout)
           (error "Timeout waiting for the operation to finish!")))))
 
+(defmacro defun- (name arguments &rest forms)
+  `(defun ,name ,arguments
+     (progn
+       (message "\n*** %s called with %s\n" (symbol-name (quote ,name)) (list ,@arguments))
+       ,@forms)))
+
 (provide 'kawa-mode-utils)
+

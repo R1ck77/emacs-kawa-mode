@@ -80,9 +80,9 @@
   (kawa-start)
   (let ((content (buffer-substring-no-properties (point-min) (point-max))))    
     (kawa--wait-for-output)
-    (kawa--expression-feedback content)
+    (process-send-string kawa-process "(begin\n")
     (process-send-string kawa-process content)
-    (process-send-string kawa-process "\n")))
+    (process-send-string kawa-process ")\n")))
 
 (defun kawa--raw-previous-expression-bounds ()
   (save-excursion    

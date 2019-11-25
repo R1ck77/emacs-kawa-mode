@@ -109,7 +109,7 @@
           (wait-for-kawa-to-exit-with-timeout 5)
           (expect (process-exit-status process)
                   :to-be 3))))
-    (it "sends the expression into the REPL" ;TODO/FIXME this breaks the *other* tests!
+    (it "sends the expression into the REPL"
       (with-temp-buffer        
         (insert "\(define x 12\)")
         (kawa-mode)
@@ -119,7 +119,17 @@
         (with-current-buffer (get-buffer "*Kawa REPL*")
           (wait-for-kawa-to-exit-with-timeout 5)
           (expect (buffer-substring-no-properties (point-min) (point-max))
-                  :to-equal "#|kawa:1|# \(define x 12\)\n#|kawa:2|# \(exit 0\)\n")))))
+                  :to-equal "#|kawa:1|# \(define x 12\)\n#|kawa:2|# \(exit 0\)\n"))))
+    (it "positions the cursor at the end of the buffer"
+      (with-temp-buffer        
+        (insert "\(define x 12\)")
+        (kawa-mode)
+        (kawa-eval-expr-at-point)
+        (kawa-eval-expr-at-point) ;;; *should* ensure the last expression is evaluated. Probably doesn't.
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+          (expect (point) :not :to-be 1)
+          (expect (point)
+                  :to-be (marker-position (process-mark kawa-process)))))))
   (describe "kawa-eval-buffer"
     (it "is a command"
       (expect (commandp 'kawa-eval-buffer)))

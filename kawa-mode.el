@@ -17,8 +17,8 @@
 (unless kawa-mode-map
   (setq kawa-mode-map (make-sparse-keymap))
   (define-key kawa-mode-map "\C-c\M-j" 'kawa-start)  
-  (define-key kawa-mode-map "\C-x\C-e" 'kawa-eval-buffer)
-  (define-key kawa-mode-map "\C-x\C-b" 'kawa-eval-expr-at-point))
+  (define-key kawa-mode-map "\C-x\C-k" 'kawa-eval-buffer)
+  (define-key kawa-mode-map "\C-x\C-e" 'kawa-eval-expr-at-point))
 
 (defvar kawa--output-received nil
   "t when the filter just received some contents")

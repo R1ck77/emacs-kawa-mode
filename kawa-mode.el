@@ -33,9 +33,12 @@
       (setq kawa--output-received t))))
 
 (defun kawa--wait-for-output (&optional timeout)
-  (kawa--wait-condition-with-timeout (lambda ()
-                                       kawa--output-received)
-                                     (or timeout kawa-output-timeout)))
+  (kawa--while-with-timeout (lambda ()
+                              (with-current-buffer (process-buffer kawa-process)
+                                (not kawa--output-received)))
+                                     (or timeout kawa-output-timeout))
+  (with-current-buffer (process-buffer kawa-process)
+    (setq kawa--output-received nil)))
 
 (defun kawa--create-kawa-process (&optional log)
   (let ((process (make-process :name "Kawa"
@@ -43,6 +46,7 @@
                                :buffer kawa-buffer-name
                                :connection-type 'pipe
                                :filter 'kawa--filter)))
+    (set-process-sentinel process (lambda (p s)))
     (or (process-live-p process)
         (error "Kawa process not started (ensure the command \"Kawa\" is in your PATH)!"))
     (accept-process-output kawa-process)
@@ -65,7 +69,7 @@
   (kawa--get-process))
 
 (defun kawa--expression-feedback (content)
-  (with-current-buffer kawa-buffer-name
+  (with-current-buffer (process-buffer kawa-process)
     (goto-char (process-mark kawa-process))
     (insert (format "%s\n" content))
     (set-marker (process-mark kawa-process) (point-max))))
@@ -104,7 +108,7 @@
   (interactive)
   (kawa-start)
   (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
-    (kawa--wait-for-output) ; TODO/FIXME this breaks everything
+    (kawa--wait-for-output)    
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
     (process-send-string kawa-process "\n")))

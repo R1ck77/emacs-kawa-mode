@@ -19,13 +19,15 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
   (let ((time (current-time)))
     (+ (elt time 1) (/ (elt time 2) 1e6))))
 
-(defun kawa--wait-condition-with-timeout (predicate-f timeout &optional check-interval)
-  (let ((check-interval (or check-interval 0.1))
+(defun kawa--while-with-timeout (predicate-f timeout &optional check-interval)
+  (let ((check-interval (or check-interval 0.01))
         (start (time)))
-    (while (funcall predicate-f)
-      (sit-for check-interval)
-      (if (> (- (time) start) timeout)
-          (error "Timeout waiting for the operation to finish!")))))
+    (let ((condition (funcall predicate-f)))
+      (while condition
+              (sit-for check-interval)
+              (if (> (- (time) start) timeout)
+                  (error "Timeout waiting for the operation to finish!")
+                (setq condition (funcall predicate-f)))))))
 
 (defmacro defun- (name arguments &rest forms)
   `(defun ,name ,arguments

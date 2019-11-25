@@ -24,15 +24,15 @@
 
 (defun wait-for-kawa-to-exit-with-timeout (timeout)
   (let ((process (find-kawa-process)))
-    (kawa--wait-condition-with-timeout (lambda ()
-                                         (process-live-p process))
-                                       timeout)))
+    (kawa--while-with-timeout (lambda ()
+                                (process-live-p process))
+                              timeout)))
 
 (defun wait-for-kawa-buffer-to-change-with-timeout (timeout)
   (let ((starting-size (point-max)))
-   (kawa--wait-condition-with-timeout (lambda ()
-                                        (= (point-max) starting-size))
-                                      timeout)))
+   (kawa--while-with-timeout (lambda ()
+                               (= (point-max) starting-size))
+                             timeout)))
 
 (defun remove-file-if-any (path)
   (condition-case nil
@@ -114,13 +114,12 @@
         (insert "\(define x 12\)")
         (kawa-mode)
         (kawa-eval-expr-at-point)
-        (insert "\(exit 12\)")
+        (insert "\(exit 0\)")
         (kawa-eval-expr-at-point)
         (with-current-buffer (get-buffer "*Kawa REPL*")
           (wait-for-kawa-to-exit-with-timeout 5)
           (expect (buffer-substring-no-properties (point-min) (point-max))
-                  :to-equal "#|kawa:1|# \(define x 12\)
-|kawa:2|# \(exit 12\)\n")))))
+                  :to-equal "#|kawa:1|# \(define x 12\)\n#|kawa:2|# \(exit 0\)\n")))))
   (describe "kawa-eval-buffer"
     (it "is a command"
       (expect (commandp 'kawa-eval-buffer)))

@@ -125,11 +125,17 @@
         (insert "\(define x 12\)")
         (kawa-mode)
         (kawa-eval-expr-at-point)
-        (kawa-eval-expr-at-point) ;;; *should* ensure the last expression is evaluated. Probably doesn't.
         (with-current-buffer (get-buffer "*Kawa REPL*")
-          (expect (point) :not :to-be 1)
-          (expect (point)
-                  :to-be (marker-position (process-mark kawa-process)))))))
+          (goto-char 1))
+        (kawa-eval-expr-at-point) ;;; *should* ensure the last expression is evaluated. Probably doesn't.
+        (with-current-buffer (get-buffer "*Kawa REPL*")          
+          (kawa-wait-for-output 4)
+          (expect (point) :not :to-be 1))
+        (let ((windows (get-buffer-window-list "*Kawa REPL*"))
+              (position (with-current-buffer "*Kawa REPL*"
+                          (point-max))))
+          (expect (length windows) :not :to-be 0)
+          (expect (window-point (car windows)) :to-be position)))))
   (describe "kawa-eval-buffer"
     (it "is a command"
       (expect (commandp 'kawa-eval-buffer)))

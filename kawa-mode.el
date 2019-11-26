@@ -24,15 +24,22 @@
   "t when the filter just received some contents")
 (make-variable-buffer-local 'kawa--output-received)
 
+(defun kawa--move-cursor-to-end (buffer)
+  (mapc (lambda (window)
+          (set-window-point window (point-max)))
+        (get-buffer-window-list buffer)))
+
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))
     (with-current-buffer (process-buffer process)
+      (goto-char (point-max))
       (insert content)
       (set-marker (process-mark process) (point-max))
-      (goto-char (point-max)) ; TODO/FIXME no effect? Save excursion somewhere?
+      (kawa--move-cursor-to-end (current-buffer))
       (setq kawa--output-received t))))
 
-(defun kawa--wait-for-output (&optional timeout)
+(defun kawa-wait-for-output (&optional timeout)
+  "Wait for the kawa process to return some output"
   (kawa--while-with-timeout (lambda ()
                               (with-current-buffer (process-buffer kawa-process)
                                 (not kawa--output-received)))
@@ -79,7 +86,7 @@
   (interactive)
   (kawa-start)
   (let ((content (buffer-substring-no-properties (point-min) (point-max))))    
-    (kawa--wait-for-output)
+    (kawa-wait-for-output)
     (process-send-string kawa-process "(begin\n")
     (process-send-string kawa-process content)
     (process-send-string kawa-process ")\n")))
@@ -108,7 +115,7 @@
   (interactive)
   (kawa-start)
   (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
-    (kawa--wait-for-output)    
+    (kawa-wait-for-output)
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
     (process-send-string kawa-process "\n")))

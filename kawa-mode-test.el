@@ -87,15 +87,18 @@
       (expect (commandp 'kawa-eval-expr-at-point)))    
     (it "starts the kawa interpreter if one is not running already"
       (with-temp-buffer
+        (kawa-mode)
         (insert "\(define x \"x symbol's value\"\)")
         (kawa-eval-expr-at-point))
       (expect (process-live-p (find-kawa-process))))
     (it "throws an error if there is no expression before the point"
       (with-temp-buffer
+        (kawa-mode)
         (insert (make-string 100 ? ))
         (expect (kawa-eval-expr-at-point) :to-throw 'error)))
     (it "throws an error if there is no expression before the point (even if there is an expression after the point)"
       (with-temp-buffer
+        (kawa-mode)
         (insert (make-string 100 ? ))
         (insert "\(define x 12\)")
         (goto-char 50)
@@ -106,7 +109,6 @@
         (kawa-mode)
         (kawa-eval-expr-at-point)
         (let ((process (find-kawa-process)))
-          (wait-for-kawa-to-exit-with-timeout 5)
           (expect (process-exit-status process)
                   :to-be 3))))
     (it "sends the expression into the REPL"
@@ -117,7 +119,6 @@
         (insert "\(exit 0\)")
         (kawa-eval-expr-at-point)
         (with-current-buffer (get-buffer "*Kawa REPL*")
-          (wait-for-kawa-to-exit-with-timeout 5)
           (expect (buffer-substring-no-properties (point-min) (point-max))
                   :to-equal "#|kawa:1|# \(define x 12\)\n#|kawa:2|# \(exit 0\)\n"))))
     (it "positions the cursor at the end of the buffer"

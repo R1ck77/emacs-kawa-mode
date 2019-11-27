@@ -169,4 +169,12 @@
         (with-current-buffer (get-buffer "*Kawa REPL*")
           (wait-for-kawa-buffer-to-change-with-timeout 2)
           (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# "))))
+    (it "evaluates the empty expression when enter is pressed"
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+          (wait-for-kawa-buffer-to-change-with-timeout 2)
+          (expect (buffer-substring-no-properties (point-min) (point-max))
                   :to-equal "#|kawa:1|# "))))))

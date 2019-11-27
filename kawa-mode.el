@@ -56,13 +56,13 @@
     (set-process-sentinel process (lambda (p s)))
     (or (process-live-p process)
         (error "Kawa process not started (ensure the command \"Kawa\" is in your PATH)!"))
-    (accept-process-output kawa-process)
     process))
 
 (defun kawa--setup-repl-buffer ()
   (with-current-buffer kawa-buffer-name
     (erase-buffer)
     (kill-all-local-variables)
+    (kawa-wait-for-output  )
     (display-buffer (current-buffer))))
 
 (defun kawa--get-process ()
@@ -86,10 +86,10 @@
   (interactive)
   (kawa-start)
   (let ((content (buffer-substring-no-properties (point-min) (point-max))))    
-    (kawa-wait-for-output)
     (process-send-string kawa-process "(begin\n")
     (process-send-string kawa-process content)
-    (process-send-string kawa-process ")\n")))
+    (process-send-string kawa-process ")\n")
+    (kawa-wait-for-output)))
 
 (defun kawa--raw-previous-expression-bounds ()
   (save-excursion    
@@ -115,10 +115,10 @@
   (interactive)
   (kawa-start)
   (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
-    (kawa-wait-for-output)
     (kawa--expression-feedback content)
     (process-send-string kawa-process content)
-    (process-send-string kawa-process "\n")))
+    (process-send-string kawa-process "\n")
+    (kawa-wait-for-output)))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

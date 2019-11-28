@@ -42,10 +42,13 @@
   "Wait for the kawa process to return some output"
   (kawa--while-with-timeout (lambda ()
                               (with-current-buffer (process-buffer kawa-process)
-                                (not kawa--output-received)))
-                                     (or timeout kawa-output-timeout))
+                                (and (not kawa--output-received)
+                                     (process-live-p kawa-process))))
+                            (or timeout kawa-output-timeout))
   (with-current-buffer (process-buffer kawa-process)
-    (setq kawa--output-received nil)))
+    (setq kawa--output-received nil))
+  (setq kawa-process (and (process-live-p kawa-process)
+                          kawa-process)))
 
 (defun kawa--create-kawa-process (&optional log)
   (let ((process (make-process :name "Kawa"
@@ -62,7 +65,7 @@
   (with-current-buffer kawa-buffer-name
     (erase-buffer)
     (kill-all-local-variables)
-    (kawa-wait-for-output  )
+    (kawa-wait-for-output)
     (display-buffer (current-buffer))))
 
 (defun kawa--get-process ()

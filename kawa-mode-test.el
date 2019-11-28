@@ -105,7 +105,7 @@
         (expect (kawa-eval-expr-at-point) :to-throw 'error)))
     (it "evaluates the expression in the buffer"
       (with-temp-buffer
-        (insert "\(exit 2\) \(exit 3\)   ")
+        (insert "\(define x 3\) \(exit x\)  ")
         (kawa-mode)
         (kawa-eval-expr-at-point)
         (let ((process (find-kawa-process)))
@@ -128,7 +128,6 @@
         (kawa-eval-expr-at-point)
         (with-current-buffer (get-buffer "*Kawa REPL*")
           (goto-char 1))
-        (kawa-eval-expr-at-point) ;;; *should* ensure the last expression is evaluated. Probably doesn't.
         (with-current-buffer (get-buffer "*Kawa REPL*")          
           (kawa-wait-for-output 4)
           (expect (point) :not :to-be 1))
@@ -168,7 +167,6 @@
         (kawa-mode)
         (kawa-start)
         (with-current-buffer (get-buffer "*Kawa REPL*")
-          (wait-for-kawa-buffer-to-change-with-timeout 2)
           (expect (buffer-substring-no-properties (point-min) (point-max))
                   :to-equal "#|kawa:1|# "))))
     (it "evaluates the empty expression when enter is pressed"
@@ -176,6 +174,5 @@
         (kawa-mode)
         (kawa-start)
         (with-current-buffer (get-buffer "*Kawa REPL*")
-          (wait-for-kawa-buffer-to-change-with-timeout 2)
           (expect (buffer-substring-no-properties (point-min) (point-max))
                   :to-equal "#|kawa:1|# "))))))

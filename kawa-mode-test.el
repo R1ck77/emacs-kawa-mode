@@ -156,7 +156,18 @@
           (expect (process-exit-status process)
                   :to-be 4)
           (expect (read-file temp-file)
-                  :to-equal debug-message)))))  )
+                  :to-equal debug-message)))))
+  (describe "kawa-return"
+    (it "evaluates the empty expression when enter is pressed"
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# ")
+          (kawa-return)
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# \n#|kawa:2|# "))))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"
@@ -165,14 +176,4 @@
       (kawa-start)
       (with-current-buffer (get-buffer "*Kawa REPL*")
         (expect (buffer-substring-no-properties (point-min) (point-max))
-                :to-equal "#|kawa:1|# "))))
-  (it "evaluates the empty expression when enter is pressed"
-    (with-temp-buffer
-      (kawa-mode)
-      (kawa-start)
-      (with-current-buffer (get-buffer "*Kawa REPL*")
-        (expect (buffer-substring-no-properties (point-min) (point-max))
-                :to-equal "#|kawa:1|# ")
-        (kawa-return)
-        (expect (buffer-substring-no-properties (point-min) (point-max))
-                :to-equal "#|kawa:1|# \n#|kawa:2|# ")))))
+                :to-equal "#|kawa:1|# ")))))

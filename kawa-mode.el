@@ -121,6 +121,11 @@
     (process-send-string kawa-process "\n")
     (kawa-wait-for-output)))
 
+(defun kawa-return ()
+  (interactive)
+  
+  )
+
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.
 

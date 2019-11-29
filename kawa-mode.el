@@ -111,7 +111,7 @@
         bounds
       (error "No expression at point"))))
 
-(defun kawa--eval-expr (form)
+(defun kawa--eval-expr (content)
   (process-send-string kawa-process content)
   (process-send-string kawa-process "\n")
   (kawa-wait-for-output))
@@ -124,10 +124,14 @@
     (kawa--expression-feedback content)
     (kawa--eval-expr content)))
 
+;;; TODO/FIXME check for correct buffer!
 (defun kawa-return ()
   (interactive)
   (with-current-buffer kawa-buffer-name
-    (kawa--eval-expr (buffer-substring-no-properties (process-mark kawa-process) (point-max)))))
+    (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))
+      (message "evaluating  '%s'" content)
+      (insert "\n")
+      (kawa--eval-expr content))))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

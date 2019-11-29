@@ -105,10 +105,11 @@
         (expect (kawa-eval-expr-at-point) :to-throw 'error)))
     (it "evaluates the expression in the buffer"
       (with-temp-buffer
-        (insert "\(define x 3\) \(exit x\)  ")
+        (insert "\(exit 0\) \(exit 3\)  ")
         (kawa-mode)
-        (kawa-eval-expr-at-point)
+        (kawa-start)
         (let ((process (find-kawa-process)))
+          (kawa-eval-expr-at-point)
           (expect (process-exit-status process)
                   :to-be 3))))
     (it "sends the expression into the REPL"

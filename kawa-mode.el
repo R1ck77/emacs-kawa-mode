@@ -46,9 +46,7 @@
                                      (process-live-p kawa-process))))
                             (or timeout kawa-output-timeout))
   (with-current-buffer (process-buffer kawa-process)
-    (setq kawa--output-received nil))
-  (setq kawa-process (and (process-live-p kawa-process)
-                          kawa-process)))
+    (setq kawa--output-received nil)))
 
 (defun kawa--create-kawa-process (&optional log)
   (let ((process (make-process :name "Kawa"

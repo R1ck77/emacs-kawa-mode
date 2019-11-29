@@ -124,14 +124,13 @@
     (kawa--expression-feedback content)
     (kawa--eval-expr content)))
 
-;;; TODO/FIXME check for correct buffer!
 (defun kawa-return ()
   (interactive)
-  (with-current-buffer kawa-buffer-name
-    (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))
-      (message "evaluating  '%s'" content)
-      (insert "\n")
-      (kawa--eval-expr content))))
+  (if (eq (current-buffer) (get-buffer kawa-buffer-name))      
+      (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))
+        (insert "\n")
+        (kawa--eval-expr content))
+    (error "kawa-return should be invoked only in the Kawa REPL")))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

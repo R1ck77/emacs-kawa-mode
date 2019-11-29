@@ -111,20 +111,23 @@
         bounds
       (error "No expression at point"))))
 
+(defun kawa--eval-expr (form)
+  (process-send-string kawa-process content)
+  (process-send-string kawa-process "\n")
+  (kawa-wait-for-output))
+
 ;;; TODO/FIXME shouldn't I check if a newline is there already?
 (defun kawa-eval-expr-at-point ()
   (interactive)
   (kawa-start)
   (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
     (kawa--expression-feedback content)
-    (process-send-string kawa-process content)
-    (process-send-string kawa-process "\n")
-    (kawa-wait-for-output)))
+    (kawa--eval-expr content)))
 
 (defun kawa-return ()
   (interactive)
-  
-  )
+  (with-current-buffer kawa-buffer-name
+    (kawa--eval-expr (buffer-substring-no-properties (process-mark kawa-process) (point-max)))))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

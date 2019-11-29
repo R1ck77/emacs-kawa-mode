@@ -127,11 +127,6 @@
         (insert "\(define x 12\)")
         (kawa-mode)
         (kawa-eval-expr-at-point)
-        (with-current-buffer (get-buffer "*Kawa REPL*")
-          (goto-char 1))
-        (with-current-buffer (get-buffer "*Kawa REPL*")          
-          (kawa-wait-for-output 4)
-          (expect (point) :not :to-be 1))
         (let ((windows (get-buffer-window-list "*Kawa REPL*"))
               (position (with-current-buffer "*Kawa REPL*"
                           (point-max))))

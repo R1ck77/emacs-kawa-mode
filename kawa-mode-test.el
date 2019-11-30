@@ -167,7 +167,35 @@
                   :to-equal "#|kawa:1|# ")
           (kawa-return)
           (expect (buffer-substring-no-properties (point-min) (point-max))
-                  :to-equal "#|kawa:1|# \n#|kawa:2|# "))))))
+                  :to-equal "#|kawa:1|# \n#|kawa:2|# "))))
+    (it "evaluates the current expression and return feedback"
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# ")
+          (insert "(define x 12)")
+          (kawa-return)
+          (insert "x")
+          (kawa-return)
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# (define x 12)\n#|kawa:2|# x\n12\n#|kawa:3|# "))))
+    (it "evaluates multi-line expressions as well"
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# ")
+          (insert "(define x")
+          (kawa-return)
+          (insert "12)")
+          (kawa-return)
+          (insert "x")
+          (kawa-return)
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# (define x\n#|.....2|# 12)\n#|kawa:3|# x\n12\n#|kawa:4|# "))))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"

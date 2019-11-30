@@ -64,7 +64,8 @@
     (erase-buffer)
     (kill-all-local-variables)
     (kawa-wait-for-output)
-    (display-buffer (current-buffer))))
+    (display-buffer (current-buffer))
+    (local-set-key (kbd "RET") 'kawa-return)))
 
 (defun kawa--get-process ()
   (when (not (process-live-p kawa-process))
@@ -73,6 +74,7 @@
   kawa-process)
 
 (defun kawa-start ()
+  "Start a Kawa REPL session if one is not present already"
   (interactive)
   (kawa--get-process))
 
@@ -84,6 +86,7 @@
 
 ;;; TODO/FIXME is there a point in using the process variable instead of kawa--get-process
 (defun kawa-eval-buffer ()
+  "Send the current buffer to the kawa process"
   (interactive)
   (kawa-start)
   (let ((content (buffer-substring-no-properties (point-min) (point-max))))    
@@ -118,6 +121,7 @@
 
 ;;; TODO/FIXME shouldn't I check if a newline is there already?
 (defun kawa-eval-expr-at-point ()
+  "Send the expression before the point to the Kawa interpreter"
   (interactive)
   (kawa-start)
   (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
@@ -125,6 +129,7 @@
     (kawa--eval-expr content)))
 
 (defun kawa-return ()
+  "Send the current expression to the Kawa interpreter"
   (interactive)
   (if (eq (current-buffer) (get-buffer kawa-buffer-name))      
       (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))

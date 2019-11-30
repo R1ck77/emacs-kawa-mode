@@ -158,7 +158,7 @@
           (expect (read-file temp-file)
                   :to-equal debug-message)))))
   (describe "kawa-return"
-    (it "evaluates the empty expression when enter is pressed"
+    (it "evaluates the empty expression and returns appropriate feedback"
       (with-temp-buffer
         (kawa-mode)
         (kawa-start)
@@ -176,4 +176,13 @@
       (kawa-start)
       (with-current-buffer (get-buffer "*Kawa REPL*")
         (expect (buffer-substring-no-properties (point-min) (point-max))
-                :to-equal "#|kawa:1|# ")))))
+                :to-equal "#|kawa:1|# "))))
+    (it "RET is equivalent to kawa-return in the REPL"
+      (with-temp-buffer
+        (kawa-mode)
+        (kawa-start)
+        (with-current-buffer (get-buffer "*Kawa REPL*")
+          (expect (buffer-substring-no-properties (point-min) (point-max))
+                  :to-equal "#|kawa:1|# ")
+          (expect (local-key-binding (kbd "RET"))
+                  :to-be 'kawa-return)))))

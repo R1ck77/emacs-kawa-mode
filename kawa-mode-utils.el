@@ -24,7 +24,7 @@ the internal forms evaluation (where the bindings are visible) if var2 is true"
         (start (time)))
     (let ((condition (funcall predicate-f)))
       (while condition
-              (sit-for check-interval)
+              (sleep-for check-interval)
               (if (> (- (time) start) timeout)
                   (error "Timeout waiting for the operation to finish!")
                 (setq condition (funcall predicate-f)))))))

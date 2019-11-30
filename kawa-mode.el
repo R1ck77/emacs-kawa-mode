@@ -53,7 +53,7 @@
                                :command (list kawa-command "--console")
                                :buffer kawa-buffer-name
                                :connection-type 'pipe
-                               :filter 'kawa--filter)))
+                               :filter #'kawa--filter)))
     (set-process-sentinel process (lambda (p s)))
     (or (process-live-p process)
         (error "Kawa process not started (ensure the command \"Kawa\" is in your PATH)!"))
@@ -103,7 +103,7 @@
       (list from (point)))))
 
 (defun kawa--valid-bounds-p (bounds)
-  (let ((trimmed-content (string-trim (apply 'buffer-substring-no-properties bounds))))
+  (let ((trimmed-content (string-trim (apply #'buffer-substring-no-properties bounds))))
     (and (> (length trimmed-content) 0)
          (<= (second bounds) (point)))))
 
@@ -124,7 +124,7 @@
   "Send the expression before the point to the Kawa interpreter"
   (interactive)
   (kawa-start)
-  (let ((content (apply 'buffer-substring-no-properties (kawa--previous-expression-bounds))))
+  (let ((content (apply #'buffer-substring-no-properties (kawa--previous-expression-bounds))))
     (kawa--expression-feedback content)
     (kawa--eval-expr content)))
 

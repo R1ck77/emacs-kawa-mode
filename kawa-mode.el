@@ -45,15 +45,15 @@
 
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))
-    (setq kawa--input-buffer (concat kawa--input-buffer content))
-    (if (kawa--ends-with-prompt-p kawa--input-buffer)
-     (with-current-buffer (process-buffer process)
-       (goto-char (point-max))
-       (insert kawa--input-buffer)
-       (setq kawa--input-buffer "")
-       (set-marker (process-mark process) (point-max))
-       (kawa--move-cursor-to-end (current-buffer))
-       (setq kawa--output-received t)))))
+    (with-current-buffer (process-buffer process)
+      (setq kawa--input-buffer (concat kawa--input-buffer content))
+      (when (kawa--ends-with-prompt-p kawa--input-buffer)
+        (goto-char (point-max))
+        (insert kawa--input-buffer)
+        (setq kawa--input-buffer "")
+        (set-marker (process-mark process) (point-max))
+        (kawa--move-cursor-to-end (current-buffer))
+        (setq kawa--output-received t)))))
 
 (defun kawa-wait-for-output (&optional timeout)
   "Wait for the kawa process to return some output"
@@ -107,7 +107,6 @@
     (kawa-wait-for-output)))
 
 (defun kawa--eval-expr (content)
-  (message "Sending: '%s'" content)
   (process-send-string kawa-process content)
   (process-send-string kawa-process "\n")
   (kawa-wait-for-output))

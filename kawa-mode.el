@@ -29,14 +29,31 @@
           (set-window-point window (point-max)))
         (get-buffer-window-list buffer)))
 
+(defun kawa--string-skip-prompt (text)
+  (let ((start (string-match "#|\\(kawa:\\|\.\.\.\.\.\\)[0-9]+|# " text)))
+    (and start (substring text (match-end 0) (length text)))))
+
+;; TODO/FIXME this could consider the previous index of the prompt for added safety!
+(defun kawa--ends-with-prompt-p (text)
+  (let ((remaining-text (kawa--string-skip-prompt text)))
+    (if remaining-text
+        (or (= (length remaining-text) 0)
+            (kawa--ends-with-prompt-p remaining-text)))))
+
+(defvar kawa--input-buffer "")
+(make-variable-buffer-local 'kawa--input-buffer)
+
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))
-    (with-current-buffer (process-buffer process)
-      (goto-char (point-max))
-      (insert content)
-      (set-marker (process-mark process) (point-max))
-      (kawa--move-cursor-to-end (current-buffer))
-      (setq kawa--output-received t))))
+    (setq kawa--input-buffer (concat kawa--input-buffer content))
+    (if (kawa--ends-with-prompt-p kawa--input-buffer)
+     (with-current-buffer (process-buffer process)
+       (goto-char (point-max))
+       (insert kawa--input-buffer)
+       (setq kawa--input-buffer "")
+       (set-marker (process-mark process) (point-max))
+       (kawa--move-cursor-to-end (current-buffer))
+       (setq kawa--output-received t)))))
 
 (defun kawa-wait-for-output (&optional timeout)
   "Wait for the kawa process to return some output"
@@ -78,12 +95,6 @@
   (interactive)
   (kawa--get-process))
 
-(defun kawa--expression-feedback (content)
-  (with-current-buffer (process-buffer kawa-process)
-    (goto-char (process-mark kawa-process))
-    (insert (format "%s\n" content))
-    (set-marker (process-mark kawa-process) (point-max))))
-
 ;;; TODO/FIXME is there a point in using the process variable instead of kawa--get-process
 (defun kawa-eval-buffer ()
   "Send the current buffer to the kawa process"
@@ -95,17 +106,17 @@
     (process-send-string kawa-process ")\n")
     (kawa-wait-for-output)))
 
-(defun kawa--raw-previous-expression-bounds ()
-  (save-excursion    
-    (backward-sexp)
-    (let ((from (point)))
-      (forward-sexp)
-      (list from (point)))))
+(defun kawa--eval-expr (content)
+  (message "Sending: '%s'" content)
+  (process-send-string kawa-process content)
+  (process-send-string kawa-process "\n")
+  (kawa-wait-for-output))
 
-(defun kawa--valid-bounds-p (bounds)
-  (let ((trimmed-content (string-trim (apply #'buffer-substring-no-properties bounds))))
-    (and (> (length trimmed-content) 0)
-         (<= (second bounds) (point)))))
+(defun kawa--expression-feedback (content)
+  (with-current-buffer (process-buffer kawa-process)
+    (goto-char (process-mark kawa-process))
+    (insert (format "%s\n" content))
+    (set-marker (process-mark kawa-process) (point-max))))
 
 (defun kawa--previous-expression-bounds ()
   "Returns a list with the beginning and end of the last sexp"
@@ -114,10 +125,17 @@
         bounds
       (error "No expression at point"))))
 
-(defun kawa--eval-expr (content)
-  (process-send-string kawa-process content)
-  (process-send-string kawa-process "\n")
-  (kawa-wait-for-output))
+(defun kawa--valid-bounds-p (bounds)
+  (let ((trimmed-content (string-trim (apply #'buffer-substring-no-properties bounds))))
+    (and (> (length trimmed-content) 0)
+         (<= (second bounds) (point)))))
+
+(defun kawa--raw-previous-expression-bounds ()
+  (save-excursion    
+    (backward-sexp)
+    (let ((from (point)))
+      (forward-sexp)
+      (list from (point)))))
 
 ;;; TODO/FIXME shouldn't I check if a newline is there already?
 (defun kawa-eval-expr-at-point ()

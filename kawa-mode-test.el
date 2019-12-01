@@ -117,11 +117,11 @@
         (insert "\(define x 12\)")
         (kawa-mode)
         (kawa-eval-expr-at-point)
-        (insert "\(exit 0\)")
+        (insert "x")
         (kawa-eval-expr-at-point)
         (with-current-buffer (get-buffer "*Kawa REPL*")
           (expect (buffer-substring-no-properties (point-min) (point-max))
-                  :to-equal "#|kawa:1|# \(define x 12\)\n#|kawa:2|# \(exit 0\)\n"))))
+                  :to-equal "#|kawa:1|# \(define x 12\)\n#|kawa:2|# x\n12\n#|kawa:3|# "))))
     (it "positions the cursor at the end of the buffer"
       (with-temp-buffer        
         (insert "\(define x 12\)")

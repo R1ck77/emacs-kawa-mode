@@ -111,6 +111,10 @@
   (process-send-string kawa-process "\n")
   (kawa-wait-for-output))
 
+;;; TODO/FIXME this is very temporary: the proper implementation will use properties for this
+(defun kawa--history-remove-me '())
+(make-variable-buffer-local 'kawa--history-remove-me)
+
 (defun kawa--expression-feedback (content)
   (with-current-buffer (process-buffer kawa-process)
     (goto-char (process-mark kawa-process))
@@ -136,12 +140,17 @@
       (forward-sexp)
       (list from (point)))))
 
+(defun kawa--temp-save-history (content)
+  (setq kawa--history-remove-me (cons content kawa--history-remove-me)))
+
 ;;; TODO/FIXME shouldn't I check if a newline is there already?
 (defun kawa-eval-expr-at-point ()
   "Send the expression before the point to the Kawa interpreter"
   (interactive)
   (kawa-start)
   (let ((content (apply #'buffer-substring-no-properties (kawa--previous-expression-bounds))))
+    (with-current-buffer (process-buffer kawa-process)
+     (kawa--temp-save-history content))
     (kawa--expression-feedback content)
     (kawa--eval-expr content)))
 
@@ -150,13 +159,23 @@
   (interactive)
   (if (eq (current-buffer) (get-buffer kawa-buffer-name))      
       (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))
+        (kawa--temp-save-history content)
         (insert "\n")
         (kawa--eval-expr content))
     (error "kawa-return should be invoked only in the Kawa REPL")))
 
 (defun kawa-history-prev ()
   "Replace the current expression in the repl with one of the previously evaluated"
-  (interactive))
+  (interactive)
+  (when (not (eq (process-buffer kawa-process) (current-buffer)))
+    (error "This command can only be executed in the Kawa REPL"))
+  (when (not kawa--history-remove-me)
+    (error "No elements in the history"))
+  (save-excursion
+    (kill-region (process-mark kawa-process) (point-max))
+    (goto-char (point-max))
+    (insert (first kawa--history-remove-me))
+    (setq kawa--history-remove-me (rest kawa--history-remove-me))))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

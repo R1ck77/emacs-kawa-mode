@@ -203,8 +203,43 @@
         (with-temp-buffer
           (kawa-mode)
           (kawa-start)
+          (expect (kawa-history-prev) :to-throw 'error))))
+    (it "raises an error if there is no previous expression"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
           (with-current-buffer (get-buffer "*Kawa REPL*")
-            (expect (kawa-history-prev) :to-throw 'error)))))))
+            (expect (kawa-history-prev) :to-throw 'error)))))
+    (it "replaces the current expression in the REPL with the previously evaluated one (kawa-eval-expr-at-point case)"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (insert "(define x 12)")
+          (kawa-eval-expr-at-point)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "x")
+            (kawa-history-prev)
+            (expect (buffer-substring-no-properties (point-min) (point-max))
+                    :to-equal "#|kawa:1|# (define x 12)
+#|kawa:2|# (define x 12)")))))
+    (it "replaces the current expression in the REPL with the previously evaluated one (kawa-return case)"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "(define x 12)")
+            (kawa-return)
+            (insert "x")
+            (kawa-history-prev)
+            (expect (buffer-substring-no-properties (point-min) (point-max))
+                    :to-equal "#|kawa:1|# (define x 12)
+#|kawa:2|# (define x 12)")))))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"

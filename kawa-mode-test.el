@@ -195,7 +195,16 @@
           (insert "x")
           (kawa-return)
           (expect (buffer-substring-no-properties (point-min) (point-max))
-                  :to-equal "#|kawa:1|# (define x\n#|.....2|# 12)\n#|kawa:3|# x\n12\n#|kawa:4|# "))))))
+                  :to-equal "#|kawa:1|# (define x\n#|.....2|# 12)\n#|kawa:3|# x\n12\n#|kawa:4|# ")))))
+  (describe "kawa-history-prev"
+    (it "raises an error if in the wrong buffer"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (expect (kawa-history-prev) :to-throw 'error)))))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"

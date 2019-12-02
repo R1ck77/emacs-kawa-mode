@@ -154,6 +154,10 @@
         (kawa--eval-expr content))
     (error "kawa-return should be invoked only in the Kawa REPL")))
 
+(defun kawa-history-prev ()
+  "Replace the current expression in the repl with one of the previously evaluated"
+  (interactive))
+
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.
 

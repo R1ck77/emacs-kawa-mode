@@ -24,6 +24,13 @@
   "t when the filter just received some contents")
 (make-variable-buffer-local 'kawa--output-received)
 
+(defvar kawa--last-command-index 0
+  "counts the number of history properties added")
+(make-variable-buffer-local 'kawa--last-command-index)
+
+(defvar kawa--input-buffer "")
+(make-variable-buffer-local 'kawa--input-buffer)
+
 (defun kawa--move-cursor-to-end (buffer)
   (mapc (lambda (window)
           (set-window-point window (point-max)))
@@ -39,9 +46,6 @@
     (if remaining-text
         (or (= (length remaining-text) 0)
             (kawa--ends-with-prompt-p remaining-text)))))
-
-(defvar kawa--input-buffer "")
-(make-variable-buffer-local 'kawa--input-buffer)
 
 (defun kawa--filter (process content)
   (when (buffer-live-p (process-buffer process))
@@ -74,7 +78,7 @@
     (set-process-sentinel process (lambda (p s)))
     (or (process-live-p process)
         (error "Kawa process not started (ensure the command \"Kawa\" is in your PATH)!"))
-    process))
+    process)) 
 
 (defun kawa--setup-repl-buffer ()
   (with-current-buffer kawa-buffer-name
@@ -112,14 +116,19 @@
   (process-send-string kawa-process "\n")
   (kawa-wait-for-output))
 
-;;; TODO/FIXME this is very temporary: the proper implementation will use properties for this
-(defun kawa--history-remove-me '())
-(make-variable-buffer-local 'kawa--history-remove-me)
+(defun kawa--add-history-property (from to)
+  (put-text-property from to
+                     'kawa-history-expression kawa--last-command-index)
+  (setq kawa--last-command-index (+ 1 kawa--last-command-index))
+  (put-text-property from to ;; TODO/FIXME debug only
+                     'font-lock-face (list ':foreground "yellow")))
 
 (defun kawa--expression-feedback (content)
   (with-current-buffer (process-buffer kawa-process)
     (goto-char (process-mark kawa-process))
-    (insert (format "%s\n" content))
+    (insert content)
+    (kawa--add-history-property (process-mark kawa-process) (point-max))
+    (insert "\n")
     (set-marker (process-mark kawa-process) (point-max))))
 
 (defun kawa--previous-expression-bounds ()
@@ -141,17 +150,12 @@
       (forward-sexp)
       (list from (point)))))
 
-(defun kawa--temp-save-history (content)
-  (setq kawa--history-remove-me (cons content kawa--history-remove-me)))
-
 ;;; TODO/FIXME shouldn't I check if a newline is there already?
 (defun kawa-eval-expr-at-point ()
   "Send the expression before the point to the Kawa interpreter"
   (interactive)
   (kawa-start)
   (let ((content (apply #'buffer-substring-no-properties (kawa--previous-expression-bounds))))
-    (with-current-buffer (process-buffer kawa-process)
-     (kawa--temp-save-history content))
     (kawa--expression-feedback content)
     (kawa--eval-expr content)))
 
@@ -160,7 +164,8 @@
   (interactive)
   (if (eq (current-buffer) (get-buffer kawa-buffer-name))      
       (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))
-        (kawa--temp-save-history content)
+        (kawa--add-history-property (process-mark kawa-process) (point-max))
+        (goto-char (point-max)) ;;; TODO/FIXME this one would require a test! If the cursor is before the expression the wrong newline is inserted
         (insert "\n")
         (kawa--eval-expr content))
     (error "kawa-return should be invoked only in the Kawa REPL")))
@@ -170,13 +175,13 @@
   (interactive)
   (when (not (eq (process-buffer kawa-process) (current-buffer)))
     (error "This command can only be executed in the Kawa REPL"))
-  (when (not kawa--history-remove-me)
-    (error "No elements in the history"))
-  (save-excursion
-    (kill-region (process-mark kawa-process) (point-max))
-    (goto-char (point-max))
-    (insert (first kawa--history-remove-me))
-    (setq kawa--history-remove-me (rest kawa--history-remove-me))))
+  (let ((history-command (kawa-previous-text-with-property 'kawa-history-expression)))
+    (when (not history-command)
+      (error "No elements in the history"))
+    (save-excursion
+      (kill-region (process-mark kawa-process) (point-max))
+      (goto-char (point-max))
+      (insert history-command))))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

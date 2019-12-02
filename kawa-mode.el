@@ -82,7 +82,8 @@
     (kill-all-local-variables)
     (kawa-wait-for-output)
     (display-buffer (current-buffer))
-    (local-set-key (kbd "RET") 'kawa-return)))
+    (local-set-key (kbd "RET") 'kawa-return)
+    (local-set-key (kbd "M-p") 'kawa-history-prev)))
 
 (defun kawa--get-process ()
   (when (not (process-live-p kawa-process))

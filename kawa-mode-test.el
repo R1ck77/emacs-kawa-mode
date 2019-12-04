@@ -239,7 +239,11 @@
             (kawa-history-prev)
             (expect (buffer-substring-no-properties (point-min) (point-max))
                     :to-equal "#|kawa:1|# (define x 12)
-#|kawa:2|# (define x 12)")))))))
+#|kawa:2|# (define x 12)")))))
+    (it "puts the cursor at the end of the replaced expression"
+      (expect false))
+    (it "considers the first expression before the current prompt "
+      (expect false))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"

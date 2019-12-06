@@ -252,18 +252,20 @@
             (kawa-history-prev)
             (expect (point)
                     :to-equal (point-max))))))
-    (xit "takes into consideration changes made to the previous expression when replacing"
+    (it "takes into consideration changes made to the previous expression when replacing"
       (with-temp-buffer
         (kawa-mode)
         (with-temp-buffer
           (kawa-mode)
           (kawa-start)
           (with-current-buffer (get-buffer "*Kawa REPL*")
+            (switch-to-buffer (current-buffer))
             (insert "(define x 12)")
             (let ((end-of-expression (point)))              
               (kawa-return)
               (goto-char (- end-of-expression 1))
-              (insert "00")
+              (setq last-kbd-macro "00")
+              (kmacro-end-and-call-macro 1)
               (goto-char (point-max))
               (kawa-history-prev)
               (expect (buffer-substring-no-properties (point-min) (point-max))

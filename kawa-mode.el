@@ -87,7 +87,9 @@
     (kawa-wait-for-output)
     (display-buffer (current-buffer))
     (local-set-key (kbd "RET") 'kawa-return)
-    (local-set-key (kbd "M-p") 'kawa-history-prev)))
+    (local-set-key (kbd "M-p") 'kawa-history-prev)
+    (font-lock-add-keywords nil '(("\\(#|kawa:[0-9]+|#\\)" 1 font-lock-keyword-face prepend)
+                                  ("\\(\\.\\)" 1 font-lock-keyword-face prepend)))))
 
 (defun kawa--get-process ()
   (when (not (process-live-p kawa-process))

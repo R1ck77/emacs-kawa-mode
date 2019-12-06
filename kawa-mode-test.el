@@ -240,10 +240,35 @@
             (expect (buffer-substring-no-properties (point-min) (point-max))
                     :to-equal "#|kawa:1|# (define x 12)
 #|kawa:2|# (define x 12)")))))
-    (it "puts the cursor at the end of the replaced expression"
-      (expect false))
-    (it "considers the first expression before the current prompt "
-      (expect false))))
+    (it "puts the cursor at the end of the expression just substituted"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "(define x 12)")
+            (kawa-return)
+            (kawa-history-prev)
+            (expect (point)
+                    :to-equal (point-max))))))
+    (xit "takes into consideration changes made to the previous expression when replacing"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "(define x 12)")
+            (let ((end-of-expression (point)))              
+              (kawa-return)
+              (goto-char (- end-of-expression 1))
+              (insert "00")
+              (goto-char (point-max))
+              (kawa-history-prev)
+              (expect (buffer-substring-no-properties (point-min) (point-max))
+                      :to-equal "#|kawa:1|# (define x 1200)
+#|kawa:2|# (define x 1200)"))))))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"

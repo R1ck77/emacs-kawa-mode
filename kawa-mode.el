@@ -180,10 +180,9 @@
   (let ((history-command (kawa-previous-text-with-property 'kawa-history-expression)))
     (when (not history-command)
       (error "No elements in the history"))
-    (save-excursion
-      (kill-region (process-mark kawa-process) (point-max))
-      (goto-char (point-max))
-      (insert history-command))))
+    (kill-region (process-mark kawa-process) (point-max))
+    (goto-char (point-max))
+    (insert history-command)))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

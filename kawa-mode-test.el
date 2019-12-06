@@ -278,7 +278,6 @@
           (kawa-mode)
           (kawa-start)
           (with-current-buffer (get-buffer "*Kawa REPL*")
-            (switch-to-buffer (current-buffer))
             (insert "(define x 12)")
             (kawa-return)
             (insert "(define y 14)")
@@ -298,7 +297,73 @@
 #|kawa:4|# (define x 12)
 #|kawa:5|# x
 12
-#|kawa:6|#")))))))
+#|kawa:6|#")))))
+    (it "can be used with a prefix"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "(define x 12)")
+            (kawa-return)
+            (insert "(define y 14)")
+            (kawa-return)
+            (insert "(define x 44)")
+            (kawa-return)
+            (kawa-history-prev 3)
+            (kawa-return)
+            (insert "x")
+            (kawa-return)
+            (expect (buffer-substring-no-properties (point-min) (point-max))
+                    :to-equal "#|kawa:1|# (define x 12)
+#|kawa:2|# (define y 14)
+#|kawa:3|# (define x 44)
+#|kawa:4|# (define x 12)
+#|kawa:5|# x
+12
+#|kawa:6|#")))))
+    (it "raises an error if invoked more than the commands available"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "(define x 12)")
+            (kawa-return)
+            (insert "(define y 14)")
+            (kawa-return)
+            (kawa-history-prev)
+            (kawa-history-prev)
+            (expect (kawa-history-prev)
+                    :to-throw 'error)))))
+    (it "raises an error if invoked with an argument greater than the prefix"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "(define x 12)")
+            (kawa-return)
+            (insert "(define y 14)")
+            (kawa-return)
+            (expect (kawa-history-prev 12)
+                    :to-throw 'error)))))
+    (it "raises an error if invoked with a negative argument"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (insert "(define x 12)")
+            (kawa-return)
+            (insert "(define y 14)")
+            (kawa-return)
+            (expect (kawa-history-prev -1)
+                    :to-throw 'error)))))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"

@@ -270,7 +270,35 @@
               (kawa-history-prev)
               (expect (buffer-substring-no-properties (point-min) (point-max))
                       :to-equal "#|kawa:1|# (define x 1200)
-#|kawa:2|# (define x 1200)"))))))))
+#|kawa:2|# (define x 1200)"))))))
+    (it "can be repeated to repeat older commands"
+      (with-temp-buffer
+        (kawa-mode)
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (switch-to-buffer (current-buffer))
+            (insert "(define x 12)")
+            (kawa-return)
+            (insert "(define y 14)")
+            (kawa-return)
+            (insert "(define x 44)")
+            (kawa-return)
+            (kawa-history-prev) ; (define x 44)
+            (kawa-history-prev) ; (define y 14)
+            (kawa-history-prev) ; (define x 12)
+            (kawa-return)
+            (insert "x")
+            (kawa-return)
+            (expect (buffer-substring-no-properties (point-min) (point-max))
+                    :to-equal "#|kawa:1|# (define x 12)
+#|kawa:2|# (define y 14)
+#|kawa:3|# (define x 44)
+#|kawa:4|# (define x 12)
+#|kawa:5|# x
+12
+#|kawa:6|#")))))))
 
 (describe "kawa REPL buffer"
   (it "shows the kawa prompt in the buffer"

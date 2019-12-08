@@ -56,12 +56,23 @@ position that satisfies the property or to (point-min) if none can be found"
         (goto-char (- (point) 1))))
     result))
 
+(defun kawa--search-forward (property-predicate)
+  "Returns the first character that satisfies the predicate forwards (current position included)
+
+It also doesn't save the excursion, but moves to the first
+position that satisfies the property or to (point-max) if none can be found"
+  (let ((result))
+    (while (and (not result) (/= (point-max) (point)))
+      (if (funcall property-predicate (point))
+          (setq result (point))
+        (goto-char (+ (point) 1))))
+    result))
+
 (defun kawa-complement (f)
   (lexical-let ((f f))
     (lambda (&rest arguments)
       (not (apply f arguments)))))
 
-;;; TODO/FIXME no tests whatsoever
 (defun kawa-previous-bounds-with-property (property &optional value)
   "Return a cons cell with the start and end of a text with the specific properties before the point
 
@@ -73,11 +84,18 @@ nil is returned if no such text can be found"
           (let ((start (kawa--search-backward (kawa-complement predicate))))
             (cons (or (+ 1 start) (point-min)) (+ end 1)))))))
 
-;;; TODO/FIXME no tests whatsoever
-(defun kawa-previous-text-with-property (property &optional value)
-  "Return the text with the specific property before the point, or nil if none can be found"
-  (when-let ((bounds (kawa-previous-bounds-with-property property value)))
-    (buffer-substring-no-properties (car bounds) (cdr bounds))))
+(defun kawa-next-bounds-with-property (property &optional value)
+  "Return a cons cell with the start and end of a text with the specific properties before the point
+
+nil is returned if no such text can be found"
+  (save-excursion
+    (let* ((current (point))
+           (predicate (kawa--create-property-predicate property value))
+           (start (kawa--search-forward predicate)))
+      (if start
+          (let ((end (kawa--search-forward (kawa-complement predicate))))
+            (if end
+                (cons start end)))))))
 
 (provide 'kawa-mode-utils)
 

@@ -31,6 +31,11 @@
 (defvar kawa--input-buffer "")
 (make-variable-buffer-local 'kawa--input-buffer)
 
+(defvar kawa-current-history-bounds nil)
+
+(defun kawa--reset-history-history ()
+  (setq kawa-current-history-bounds nil))
+
 (defun kawa--move-cursor-to-end (buffer)
   (mapc (lambda (window)
           (set-window-point window (point-max)))
@@ -88,6 +93,7 @@
     (display-buffer (current-buffer))
     (local-set-key (kbd "RET") 'kawa-return)
     (local-set-key (kbd "M-p") 'kawa-history-prev)
+    (local-set-key (kbd "M-n") 'kawa-history-next)
     (font-lock-add-keywords nil '(("\\(#|kawa:[0-9]+|#\\)" 1 font-lock-keyword-face prepend)
                                   ("\\(\\.\\)" 1 font-lock-keyword-face prepend)))))
 
@@ -107,7 +113,8 @@
   "Send the current buffer to the kawa process"
   (interactive)
   (kawa-start)
-  (let ((content (buffer-substring-no-properties (point-min) (point-max))))    
+  (let ((content (buffer-substring-no-properties (point-min) (point-max))))
+    (kawa--reset-history-history)
     (process-send-string kawa-process "(begin\n")
     (process-send-string kawa-process content)
     (process-send-string kawa-process ")\n")
@@ -159,6 +166,7 @@
   (kawa-start)
   (let ((content (apply #'buffer-substring-no-properties (kawa--previous-expression-bounds))))
     (kawa--expression-feedback content)
+    (kawa--reset-history-history)
     (kawa--eval-expr content)))
 
 (defun kawa-return ()
@@ -169,20 +177,71 @@
         (kawa--add-history-property (process-mark kawa-process) (point-max))
         (goto-char (point-max)) ;;; TODO/FIXME this one would require a test! If the cursor is before the expression the wrong newline is inserted
         (insert "\n")
+        (kawa--reset-history-history)
         (kawa--eval-expr content))
     (error "kawa-return should be invoked only in the Kawa REPL")))
 
-(defun kawa-history-prev ()
-  "Replace the current expression in the repl with one of the previously evaluated"
-  (interactive)
-  (when (not (eq (process-buffer kawa-process) (current-buffer)))
-    (error "This command can only be executed in the Kawa REPL"))
-  (let ((history-command (kawa-previous-text-with-property 'kawa-history-expression)))
+(defun kawa--extract-history-command (history-find-function)
+  (when-let ((history-bounds (funcall history-find-function 'kawa-history-expression)))
+    (setq kawa-current-history-bounds history-bounds)
+    (buffer-substring-no-properties (car history-bounds) (cdr history-bounds))))
+
+(defun kawa--extract-previous-history-command ()
+  (kawa--extract-history-command #'kawa-previous-bounds-with-property))
+
+;; TODO/FIXME check if I recover from an error
+(defun kawa--previous-history-command ()
+  (save-excursion
+    (if kawa-current-history-bounds
+        (unless (eq (car kawa-current-history-bounds) (point-min))
+          (goto-char (- (first kawa-current-history-bounds) 1))
+          (kawa--extract-previous-history-command))
+      (kawa--extract-previous-history-command))))
+
+(defun kawa--extract-next-history-command ()
+  (kawa--extract-history-command #'kawa-next-bounds-with-property))
+
+(defun kawa--next-history-command ()
+  (save-excursion
+    (if kawa-current-history-bounds
+        (unless (eq (cdr kawa-current-history-bounds) (point-max))
+          (goto-char (cdr kawa-current-history-bounds))
+          (kawa--extract-next-history-command))
+      (kawa--extract-next-history-command))))
+
+(defun kawa--unsafe-history-pull (history-function)
+  (let ((history-command (funcall history-function)))
     (when (not history-command)
       (error "No elements in the history"))
     (kill-region (process-mark kawa-process) (point-max))
     (goto-char (point-max))
     (insert history-command)))
+
+(defun kawa--unsafe-history-prev ()
+  (kawa--unsafe-history-pull #'kawa--previous-history-command))
+
+(defun kawa--unsafe-history-next ()
+  (kawa--unsafe-history-pull #'kawa--next-history-command))
+
+(defun kawa--check-repetition-argument (repeat)
+  (setq repeat (or repeat 1))
+  (when (not (eq (process-buffer kawa-process) (current-buffer)))
+    (error "This command can only be executed in the Kawa REPL"))
+  (when (< repeat 0)
+    (error "Invalid number of previous history repetitions"))
+  repeat)
+
+(defun kawa-history-prev (&optional repeat)
+  "Replace the current expression in the repl with one of the previously evaluated"
+  (interactive)             ; TODO/FIXME put a proper arguments format
+  (dotimes (_ (or (kawa--check-repetition-argument repeat) 0))
+    (kawa--unsafe-history-prev)))
+
+(defun kawa-history-next (&optional repeat)
+  "Replace the current expression in the repl with the next in the history"
+  (interactive)             ; TODO/FIXME put a proper arguments format
+  (dotimes (_ (or (kawa--check-repetition-argument repeat) 0))
+    (kawa--unsafe-history-next)))
 
 (define-derived-mode kawa-mode scheme-mode
   "Kawa" "Major mode for editing Kawa files.

@@ -169,16 +169,35 @@
     (kawa--reset-history-history)
     (kawa--eval-expr content)))
 
+(defun kawa--return-unevaluated ()
+  "Evaluate the expression between the last prompt and (point-max)"
+  (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))
+    (kawa--add-history-property (process-mark kawa-process) (point-max))
+    (goto-char (point-max)) ;;; TODO/FIXME this one would require a test! If the cursor is before the expression the wrong newline is inserted
+    (insert "\n")
+    (kawa--reset-history-history)
+    (kawa--eval-expr content)))
+
+(defun kawa--return-history-exp ()
+  (let ((expression (kawa--get-history-exp-at-point)))
+    (kill-region (process-mark kawa-process) (point-max))
+    (goto-char (process-mark kawa-process))
+    (insert expression)
+    (kawa--return-unevaluated)))
+
+(defun kawa--unsafe-return (point)
+  (cond
+   ((and (>= point (process-mark kawa-process))
+         (<= point (point-max)))
+    (kawa--return-unevaluated))
+   ((kawa--inside-history-expr-p point) (kawa--return-history-exp))
+   (t (error "no expression at point"))))
+
 (defun kawa-return ()
   "Send the current expression to the Kawa interpreter"
   (interactive)
   (if (eq (current-buffer) (get-buffer kawa-buffer-name))      
-      (let ((content (buffer-substring-no-properties (process-mark kawa-process) (point-max))))
-        (kawa--add-history-property (process-mark kawa-process) (point-max))
-        (goto-char (point-max)) ;;; TODO/FIXME this one would require a test! If the cursor is before the expression the wrong newline is inserted
-        (insert "\n")
-        (kawa--reset-history-history)
-        (kawa--eval-expr content))
+      (kawa--unsafe-return (point))
     (error "kawa-return should be invoked only in the Kawa REPL")))
 
 (defun kawa--extract-history-command (history-find-function)

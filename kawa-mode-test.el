@@ -195,7 +195,27 @@
           (insert "x")
           (kawa-return)
           (expect (buffer-substring-no-properties (point-min) (point-max))
-                  :to-equal "#|kawa:1|# (define x\n#|.....2|# 12)\n#|kawa:3|# x\n12\n#|kawa:4|# ")))))
+                  :to-equal "#|kawa:1|# (define x\n#|.....2|# 12)\n#|kawa:3|# x\n12\n#|kawa:4|# "))))
+    (it "evaluates the previous expression the user already evaluated if the cursor is on it"
+        (with-temp-buffer
+          (kawa-mode)
+          (kawa-start)
+          (with-current-buffer (get-buffer "*Kawa REPL*")
+            (switch-to-buffer (get-buffer "*Kawa REPL*"))
+            (insert "(define x 100)")
+            (let ((last-expr-pos (point)))              
+              (kawa-return)
+              (insert "(define x 12)")
+              (kawa-return)
+              (goto-char (- last-expr-pos 1))
+              (setq last-kbd-macro "00")
+              (kmacro-end-and-call-macro 1)
+              (kawa-return)
+              (expect (buffer-substring-no-properties (point-min) (point-max))
+                      :to-equal "#|kawa:1|# (define x 10000)
+#|kawa:2|# (define x 12)
+#|kawa:3|# (define x 10000)
+#|kawa:4|# "))))))
   (describe "kawa-history-prev"
     (it "raises an error if in the wrong buffer"
       (with-temp-buffer

@@ -97,5 +97,21 @@ nil is returned if no such text can be found"
             (if end
                 (cons start end)))))))
 
+(defun kawa--get-history-exp-at-point ()
+  (kawa--get-expression-matching-predicate-at-point (kawa--create-property-predicate 'kawa-history-expression)))
+
+(defun kawa--get-expression-matching-predicate-at-point (predicate-f)
+  (let ((current (point))
+        (complemented (kawa-complement predicate-f))
+        (start)
+        (end))
+    (setq start (kawa--search-backward complemented))
+    (goto-char current)
+    (setq end (kawa--search-forward complemented))
+    (buffer-substring-no-properties (or (+ start 1) (point-min)) (or end (point-max)))))
+
+(defun kawa--inside-history-expr-p (point)
+  (get-text-property point 'kawa-history-expression))
+
 (provide 'kawa-mode-utils)
 
